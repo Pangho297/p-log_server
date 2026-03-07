@@ -7,10 +7,14 @@ import {
 } from '@nestjs/common';
 import { IS_LOCAL, PORT, SERVER_ENV } from './consts';
 import { setupSwagger } from './shared/swagger/setup';
+import { ValidationException } from './shared/exceptions/validation';
+import { AllInOneExceptionFilter } from './shared/exceptions/filter';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const port = PORT;
+
+  app.useGlobalFilters(new AllInOneExceptionFilter());
 
   app.useGlobalPipes(
     new ValidationPipe({
@@ -18,7 +22,8 @@ async function bootstrap() {
       transform: true,
       exceptionFactory: (errors) => {
         // exceptionFactory: 유효성 검사 실패 시, 기본 예외(BadRequestException) 대신
-        // TODO 커스텀 ValidationException을 던져서 에러 응답을 일관되게 관리할 수 있게 함
+        // 커스텀 ValidationException을 던져서 에러 응답을 일관되게 관리할 수 있게 함
+        throw new ValidationException(errors);
       },
     }),
   );
