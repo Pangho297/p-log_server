@@ -273,8 +273,8 @@ export function ArrayProperty<T>(
   );
 }
 
-export function NestedProperty<T>(
-  options: NestedDecoratorOptions<T>,
+export function NestedProperty(
+  options: NestedDecoratorOptions,
 ): PropertyDecorator {
   const { type, ...baseOptions } = options;
   const decorators: PropertyDecorator[] = [

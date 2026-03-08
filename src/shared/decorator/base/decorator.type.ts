@@ -48,7 +48,7 @@ export interface ArrayDecoratorOptions<T> extends BaseDecoratorOptions {
   validationOptions?: Record<string, any>; // 추가적인 유효성 검사 옵션
 }
 
-export interface NestedDecoratorOptions<T> extends BaseDecoratorOptions {
-  type: () => new (...args: unknown[]) => T; // 중첩된 객체의 타입
+export interface NestedDecoratorOptions extends BaseDecoratorOptions {
+  type: any; // 중첩된 객체의 타입
   validationOptions?: Record<string, any>; // 중첩된 객체를 위한 추가적인 유효성 검사 옵션
 }
