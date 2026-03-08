@@ -35,6 +35,7 @@ export function setupSwagger(app: INestApplication) {
       },
       '인증토큰',
     )
+    .addTag('🔐 인증', '/auth 인증')
     .addTag('🙋 사용자', '/user 사용자 관리')
     .build();
 
@@ -49,6 +50,7 @@ export function setupSwagger(app: INestApplication) {
   const options: SwaggerCustomOptions = {
     swaggerOptions: {
       docExpansion: 'none',
+      persistAuthorization: true,
     },
   };
 
