@@ -2,11 +2,10 @@ import { Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { AuthRepository } from './auth.repository';
 import { createHash, randomUUID } from 'crypto';
-import { UUID } from '@/shared/types/common';
+import { JWTPayload, UUID } from '@/shared/types/common';
 import { IS_LOCAL } from '@/consts';
 import { UnauthorizedException } from '@/shared/exceptions/validation';
 import { RefreshTokenEntity } from './token.entity';
-import { RefreshTokenReqDto } from './dto/refresh-req.dto';
 import { LoginTokenDto } from './dto/login-token.dto';
 
 @Injectable()
@@ -24,7 +23,7 @@ export class AuthService {
   }
 
   private signAccessToken(userId: UUID) {
-    return this.jwtService.sign(
+    return this.jwtService.sign<JWTPayload>(
       { sub: userId, type: 'access' },
       {
         secret: IS_LOCAL
@@ -36,12 +35,12 @@ export class AuthService {
   }
 
   private signRefreshToken(userId: UUID, jti: string) {
-    return this.jwtService.sign(
-      { sub: userId, type: 'refresh' },
+    return this.jwtService.sign<JWTPayload>(
+      { sub: userId, jti, type: 'refresh' },
       {
         secret: IS_LOCAL
-          ? process.env.DEV_JWT_ACCESS_SECRET
-          : process.env.JWT_ACCESS_SECRET,
+          ? process.env.DEV_JWT_REFRESH_SECRET
+          : process.env.JWT_REFRESH_SECRET,
         expiresIn: this.REFRESH_EXPIRES_SEC,
       },
     );
@@ -49,11 +48,17 @@ export class AuthService {
 
   async verifyRefreshToken(token: string) {
     try {
-      return this.jwtService.verify(token, {
+      const payload = this.jwtService.verify<JWTPayload>(token, {
         secret: IS_LOCAL
           ? process.env.DEV_JWT_REFRESH_SECRET
           : process.env.JWT_REFRESH_SECRET,
       });
+
+      if (payload.type !== 'refresh') {
+        throw new UnauthorizedException('유효하지 않은 Refresh Token입니다');
+      }
+
+      return payload;
     } catch {
       throw new UnauthorizedException('유효하지 않은 Refresh Token입니다');
     }
@@ -61,11 +66,17 @@ export class AuthService {
 
   async verifyAccessToken(token: string) {
     try {
-      return this.jwtService.verify(token, {
+      const payload = this.jwtService.verify<JWTPayload>(token, {
         secret: IS_LOCAL
-          ? process.env.DEV_JWT_REFRESH_SECRET
-          : process.env.JWT_REFRESH_SECRET,
+          ? process.env.DEV_JWT_ACCESS_SECRET
+          : process.env.JWT_ACCESS_SECRET,
       });
+
+      if (payload.type !== 'access') {
+        throw new UnauthorizedException('유효하지 않은 Access Token입니다');
+      }
+
+      return payload;
     } catch {
       throw new UnauthorizedException('유효하지 않은 Access Token입니다');
     }
@@ -82,11 +93,8 @@ export class AuthService {
     return { accessToken, refreshToken };
   }
 
-  async refresh({
-    userId,
-    oldRefreshToken,
-  }: RefreshTokenReqDto): Promise<LoginTokenDto> {
-    await this.verifyRefreshToken(oldRefreshToken);
+  async refresh(oldRefreshToken: string): Promise<LoginTokenDto> {
+    const payload = await this.verifyRefreshToken(oldRefreshToken);
 
     // TODO: 토큰 조회 추가 필요
     const found: RefreshTokenEntity = await this.AuthRepository.findOne();
@@ -105,8 +113,8 @@ export class AuthService {
     await this.AuthRepository.saveToken();
 
     const newJti = randomUUID();
-    const accessToken = this.signAccessToken(userId);
-    const refreshToken = this.signRefreshToken(userId, newJti);
+    const accessToken = this.signAccessToken(payload.sub);
+    const refreshToken = this.signRefreshToken(payload.sub, newJti);
 
     // TODO: 새로운 토큰 저장
     await this.AuthRepository.saveToken();
@@ -123,7 +131,7 @@ export class AuthService {
       if (found && !found.revokedAt) {
         found.revokedAt = new Date();
         // TODO 토큰 변경 추가 필요
-        await this.AuthRepository.save();
+        await this.AuthRepository.saveToken();
       }
     } catch {
       // 토큰을 찾지 못하거나 이미 revokedAt이 있는경우에도 성공 처리
