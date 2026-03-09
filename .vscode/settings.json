@@ -1,3 +1,6 @@
 {
-  "typescript.tsdk": "node_modules\\typescript\\lib"
+  "typescript.tsdk": "node_modules\\typescript\\lib",
+  "terminal.integrated.env.windows": {
+    "DATABASE_URL": "postgresql://postgres:postgres@localhost:5432/app",
+  }
 }

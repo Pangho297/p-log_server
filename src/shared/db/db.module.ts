@@ -11,9 +11,9 @@ import * as schema from './schema';
       provide: PG_POOL,
       useFactory: () => {
         const url = process.env.DATABASE_URL;
+        console.log('url: ', url);
 
         if (!url) {
-          console.log('env: ', process.env);
           throw new Error('환경변수 DATABASE_URL이 설정되지 않았습니다.');
         }
 

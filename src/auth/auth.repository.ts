@@ -9,7 +9,7 @@ import { and, eq, gt, isNull } from 'drizzle-orm';
 import { RevokeTokenByJtiInput } from './dto/revoke-token-by-jti-input.dto';
 import { RotateRefreshTokenInputDto } from './dto/rotate-refresh-token-input.dto';
 import { UnauthorizedException } from '@/shared/exceptions/validation';
-import { hashToken } from './utils';
+import { hasher } from '@/shared/utils/hasher';
 
 @Injectable()
 export class AuthRepository {
@@ -84,7 +84,7 @@ export class AuthRepository {
       if (row.expiresAt.getTime() < Date.now())
         throw new UnauthorizedException('Refresh Token이 만료되었습니다.');
 
-      if (row.tokenHash !== hashToken(input.oldRefreshToken))
+      if (row.tokenHash !== hasher(input.oldRefreshToken))
         throw new UnauthorizedException('Refresh Token이 일치하지 않습니다.');
 
       const revoked = await tx

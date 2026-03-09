@@ -6,7 +6,9 @@ import { JWTPayload, UUID } from '@/shared/types/common';
 import { IS_LOCAL } from '@/consts';
 import { UnauthorizedException } from '@/shared/exceptions/validation';
 import { LoginTokenDto } from './dto/login-token.dto';
-import { hashToken } from './utils';
+import { hasher } from '@/shared/utils/hasher';
+import { UserService } from '@/user/user.service';
+import { LoginInputDto } from './dto/login-input.dto';
 
 @Injectable()
 export class AuthService {
@@ -15,6 +17,7 @@ export class AuthService {
 
   constructor(
     private readonly jwtService: JwtService,
+    private readonly UserService: UserService,
     private readonly AuthRepository: AuthRepository,
   ) {}
 
@@ -78,8 +81,15 @@ export class AuthService {
     }
   }
 
-  async login(userId: UUID): Promise<LoginTokenDto> {
-    // TODO: 이메일 + 비밀번호 입력으로 로그인 구현 이메일로 사용자 조회 추가 필요
+  async login(input: LoginInputDto): Promise<LoginTokenDto> {
+    const hashing = hasher(input.password);
+    console.log({ hashing });
+    const user = await this.UserService.verifyAccount({
+      email: input.email,
+      password: hashing,
+    });
+    const userId = user.id;
+
     const jti = randomUUID();
     const accessToken = this.signAccessToken(userId);
     const refreshToken = this.signRefreshToken(userId, jti);
@@ -87,7 +97,7 @@ export class AuthService {
     await this.AuthRepository.saveToken({
       userId,
       jti,
-      tokenHash: hashToken(refreshToken),
+      tokenHash: hasher(refreshToken),
       expiresAt: new Date(Date.now() + this.REFRESH_EXPIRES_SEC * 1000),
       revokedAt: null,
     });
@@ -112,7 +122,7 @@ export class AuthService {
       newRow: {
         userId: payload.sub,
         jti: newJti,
-        tokenHash: hashToken(refreshToken),
+        tokenHash: hasher(refreshToken),
         expiresAt: new Date(Date.now() + this.REFRESH_EXPIRES_SEC * 1000),
         revokedAt: null,
       },

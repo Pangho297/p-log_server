@@ -1,6 +1,11 @@
+import { StringProperty } from '@/shared/decorator';
 import { Injectable } from '@nestjs/common';
 
 @Injectable()
 export class UserDto {
-  // User 타입 정의
+  @StringProperty({ description: '사용자 Id (PK)' })
+  id: string;
+
+  @StringProperty({ description: '사용자 Email' })
+  email: string;
 }

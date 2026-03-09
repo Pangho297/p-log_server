@@ -1,11 +1,13 @@
 import { Body, Controller, Post } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
-import { LoginReqDto } from './dto/login-req.dto';
+import { LoginInputDto } from './dto/login-input.dto';
+import { AuthService } from './auth.service';
+import { hasher } from '@/shared/utils/hasher';
 
 @ApiTags('🔐 인증')
 @Controller('auth')
 export class AuthController {
-  constructor() {}
+  constructor(private readonly AuthService: AuthService) {}
 
   @Post('login')
   @ApiOperation({
@@ -23,7 +25,7 @@ export class AuthController {
 - 또는 **axios** 의 요청 설정 중 **withCredentials**를 **true**로 설정
     `,
   })
-  login(@Body() body: LoginReqDto) {
-    console.log('Test', body);
+  login(@Body() body: LoginInputDto) {
+    return this.AuthService.login(body);
   }
 }
