@@ -17,8 +17,8 @@ export const refresh_token_model = pgTable(
     expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
     revokedAt: timestamp('revoked_at', { withTimezone: true }),
   },
-  (table) => ({
-    userIdIdx: index('refresh_token_user_id_idx').on(table.userId),
-    jtiUnique: uniqueIndex('refresh_token_jti_uq').on(table.jti),
-  }),
+  (table) => [
+    index('refresh_token_user_id_idx').on(table.userId),
+    uniqueIndex('refresh_token_jti_uq').on(table.jti),
+  ],
 );

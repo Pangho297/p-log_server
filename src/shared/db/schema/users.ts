@@ -8,4 +8,8 @@ export const user_model = pgTable('user_model', {
   createdAt: timestamp('created_at', { withTimezone: true })
     .defaultNow()
     .notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+  deletedAt: timestamp('deleted_at', { withTimezone: true }),
 });
