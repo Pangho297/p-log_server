@@ -1,6 +1,5 @@
 import { DRIZZLE_DB } from '@/shared/db/db.token';
 import {
-  BadRequestException,
   ConflictException,
   Inject,
   Injectable,
@@ -21,12 +20,15 @@ export class UserRepository {
   ) {}
 
   // 유저 생성
-  async create(input: CreateUserInputDto) {
+  async create(input: CreateUserInputDto): Promise<UserDto> {
     // service 계층에서 비밀번호 해싱되어 받아 DB에 저장
     const userModel = schema.user_model;
     try {
       const [row] = await this.db.insert(userModel).values(input).returning(); // 생성 결과물 배출
-      return row;
+      return {
+        id: row.id,
+        email: row.email,
+      };
     } catch (e) {
       if (e?.code === '23505') {
         throw new ConflictException('이미 사용 중인 이메일 입니다.');

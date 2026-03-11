@@ -3,12 +3,13 @@ import { UserRepository } from './user.repository';
 import { CreateUserInputDto } from './dto/create-user.dto';
 import { VerifyUserInputDto } from './dto/verify-user-input.dto';
 import { hasher } from '@/shared/utils/hasher';
+import { UserDto } from './user.entity';
 
 @Injectable()
 export class UserService {
   constructor(private readonly userRepository: UserRepository) {}
 
-  create(body: CreateUserInputDto) {
+  create(body: CreateUserInputDto): Promise<UserDto> {
     // 비밀번호 해싱
     const hashing = hasher(body.password);
     const input: CreateUserInputDto = {

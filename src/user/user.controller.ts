@@ -1,7 +1,8 @@
-import { Body, Controller, Get, Param, Post } from '@nestjs/common';
+import { Body, Controller, Post } from '@nestjs/common';
 import { UserService } from './user.service';
-import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { CreateUserInputDto } from './dto/create-user.dto';
+import { UserDto } from './user.entity';
 
 @ApiTags('🙋 사용자')
 @Controller('user')
@@ -9,6 +10,7 @@ export class UserController {
   constructor(private readonly userService: UserService) {}
 
   @Post()
+  @ApiOkResponse({ type: UserDto })
   @ApiOperation({
     summary: '계정 생성',
     description: `
@@ -24,12 +26,7 @@ export class UserController {
 실제 환경에선 생성 성공/실패 여부만 확인할 수 있어야 하겠지만 프로젝트 프리뷰 차원에서 생성 결과 반환 중
     `,
   })
-  create(@Body() body: CreateUserInputDto) {
+  create(@Body() body: CreateUserInputDto): Promise<UserDto> {
     return this.userService.create(body);
-  }
-
-  @Get()
-  findUserByEmail(@Param('email') email: string) {
-    return this.userService.findUserByEmail(email);
   }
 }

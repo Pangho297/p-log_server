@@ -9,6 +9,7 @@ import { LoginTokenDto } from './dto/login-token.dto';
 import { hasher } from '@/shared/utils/hasher';
 import { UserService } from '@/user/user.service';
 import { LoginInputDto } from './dto/login-input.dto';
+import { LogoutDto } from './dto/logout.dto';
 
 @Injectable()
 export class AuthService {
@@ -17,8 +18,8 @@ export class AuthService {
 
   constructor(
     private readonly jwtService: JwtService,
-    private readonly UserService: UserService,
-    private readonly AuthRepository: AuthRepository,
+    private readonly userService: UserService,
+    private readonly authRepository: AuthRepository,
   ) {}
 
   private signAccessToken(userId: UUID) {
@@ -83,18 +84,19 @@ export class AuthService {
 
   async login(input: LoginInputDto): Promise<LoginTokenDto> {
     const hashing = hasher(input.password);
-    console.log({ hashing });
-    const user = await this.UserService.verifyAccount({
+
+    const user = await this.userService.verifyAccount({
       email: input.email,
       password: hashing,
     });
+
     const userId = user.id;
 
     const jti = randomUUID();
     const accessToken = this.signAccessToken(userId);
     const refreshToken = this.signRefreshToken(userId, jti);
 
-    await this.AuthRepository.saveToken({
+    await this.authRepository.saveToken({
       userId,
       jti,
       tokenHash: hasher(refreshToken),
@@ -116,7 +118,7 @@ export class AuthService {
     const accessToken = this.signAccessToken(payload.sub);
     const refreshToken = this.signRefreshToken(payload.sub, newJti);
 
-    await this.AuthRepository.rotateRefreshToken({
+    await this.authRepository.rotateRefreshToken({
       oldJti: payload.jti,
       oldRefreshToken,
       newRow: {
@@ -131,7 +133,7 @@ export class AuthService {
     return { accessToken, refreshToken };
   }
 
-  async logout(refreshToken: string) {
+  async logout(refreshToken: string): Promise<LogoutDto> {
     try {
       const payload = await this.verifyRefreshToken(refreshToken);
 
@@ -139,15 +141,18 @@ export class AuthService {
         throw new UnauthorizedException('Refresh Token이 유효하지 않습니다.');
       }
 
-      const found = await this.AuthRepository.findActiveByJti({
+      const found = await this.authRepository.findActiveByJti({
         jti: payload.jti,
       });
 
       if (found && !found.revokedAt) {
-        await this.AuthRepository.revokeTokenByJti({ jti: payload.jti });
+        await this.authRepository.revokeTokenByJti({ jti: payload.jti });
       }
+
+      return { success: true };
     } catch {
       // 토큰을 찾지 못하거나 이미 revokedAt이 있는경우에도 성공 처리
+      return { success: true };
     }
   }
 }
