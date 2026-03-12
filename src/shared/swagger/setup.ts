@@ -37,6 +37,7 @@ export function setupSwagger(app: INestApplication) {
     )
     .addTag('🔐 인증', '/auth 인증')
     .addTag('🙋 사용자', '/user 사용자 관리')
+    .addTag('📄 게시글', '/post 게시글 관리')
     .build();
 
   const document = SwaggerModule.createDocument(app, config);

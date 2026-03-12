@@ -5,9 +5,11 @@ import { UserService } from '@/user/user.service';
 import { UserRepository } from '@/user/user.repository';
 import { AuthService } from './auth.service';
 import { AuthRepository } from './auth.repository';
+import { TokenGuard } from '@/shared/auth/token.guard';
 
 @Module({
   providers: [
+    TokenGuard,
     JwtService,
     UserService,
     UserRepository,
@@ -15,6 +17,6 @@ import { AuthRepository } from './auth.repository';
     AuthRepository,
   ],
   controllers: [AuthController],
-  exports: [],
+  exports: [AuthService],
 })
 export class AuthModule {}
