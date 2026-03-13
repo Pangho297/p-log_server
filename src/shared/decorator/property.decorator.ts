@@ -246,8 +246,7 @@ export function ArrayProperty<T>(
     ),
   );
 
-  const elementType = type();
-  if (!isPrimitiveType(elementType)) {
+  if (!isPrimitiveType(type)) {
     decorators.push(Type(type));
   }
 
@@ -259,15 +258,15 @@ export function ArrayProperty<T>(
   if (maxSize !== undefined) decorators.push(ArrayMaxSize(maxSize));
   if (unique) decorators.push(ArrayUnique());
 
-  if (isPrimitiveType(elementType)) {
-    const validator = getPrimitiveValidator(elementType);
+  if (isPrimitiveType(type)) {
+    const validator = getPrimitiveValidator(type);
     if (validator) decorators.push(validator);
   } else {
     decorators.push(ValidateNested({ each: true }));
   }
 
   return DecoratorFactory.createPropertyDecorator(
-    [elementType],
+    [type],
     decorators,
     baseOptions,
   );

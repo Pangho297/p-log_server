@@ -1,0 +1,60 @@
+import { DRIZZLE_DB } from '@/shared/db/db.token';
+import { NodePgDatabase } from 'drizzle-orm/node-postgres';
+import * as schema from '@/shared/db/schema';
+import { Inject } from '@nestjs/common';
+import { CreatePostInputDto } from './dto/create-post-input.dto';
+import { makeSuffix } from './utils';
+import { BlogException } from '@/shared/exceptions/define/blog.exception';
+import { PostDto } from './post.entity';
+import slugify from '@sindresorhus/slugify';
+
+export class PostRepository {
+  constructor(
+    @Inject(DRIZZLE_DB) private readonly db: NodePgDatabase<typeof schema>,
+  ) {}
+
+  async create(input: CreatePostInputDto, userId: string): Promise<PostDto> {
+    const postModel = schema.post_model;
+
+    // slug 생성 시 DB 충돌 방지를 위해 repository 계층에서 수행
+    const slugBase = slugify(input.title, {
+      transliterate: false, // 유니코드(한글) 유지
+      lowercase: true, // 소문자
+      separator: '_',
+      decamelize: false,
+    });
+
+    const base = slugBase || 'post'; // 제목이 전부 제거되는 경우 대비
+
+    for (let attempt = 0; attempt < 3; attempt += 1) {
+      const slug = `${base}-${makeSuffix()}`;
+
+      try {
+        const [row] = await this.db
+          .insert(postModel)
+          .values({
+            userId,
+            slug,
+            title: input.title,
+            content: input.content,
+            tags: input.tags,
+          })
+          .returning();
+
+        return row;
+      } catch (error: any) {
+        // Postgres unique violation: 23505
+        // slug unique 인덱스 충돌이면 재시도, 그 외 에러는 즉시 throw
+        if (
+          error?.code === '23505' &&
+          String(error?.detail).includes('(slug)')
+        ) {
+          continue;
+        }
+        throw error;
+      }
+    }
+
+    throw new BlogException('POST', 'CREATE_SLUG');
+  }
+}

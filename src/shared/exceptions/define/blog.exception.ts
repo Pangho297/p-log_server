@@ -16,6 +16,11 @@ export const errorMapper = {
       statusCode: HttpStatus.FORBIDDEN,
       errorCode: 'POST_10000',
     },
+    CREATE_SLUG: {
+      errorMessage: '슬러그 생성에 반복 실패했습니다. 다시 시도해 주세요.',
+      statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+      errorCode: 'POST_10001',
+    },
   },
 } as const satisfies ErrorTypeShape;
 

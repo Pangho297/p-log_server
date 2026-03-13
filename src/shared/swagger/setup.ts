@@ -51,7 +51,6 @@ export function setupSwagger(app: INestApplication) {
   const options: SwaggerCustomOptions = {
     swaggerOptions: {
       docExpansion: 'none',
-      persistAuthorization: true,
     },
   };
 
