@@ -47,12 +47,12 @@ export class PostController {
     return console.log('게시글 상세 조회');
   }
 
-  @Patch()
+  @Patch(':slug')
   update() {
     return console.log('게시글 수정');
   }
 
-  @Delete()
+  @Delete(':slug')
   delete() {
     return console.log('게시글 삭제');
   }
