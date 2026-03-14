@@ -40,7 +40,7 @@ export interface BooleanDecoratorOptions extends BaseDecoratorOptions {
 }
 
 export interface ArrayDecoratorOptions<T> extends BaseDecoratorOptions {
-  type: any; // 배열 요소의 타입
+  type: T; // 배열 요소의 타입
   minSize?: number; // 배열의 최소 요소 수
   maxSize?: number; // 배열의 최대 요소 수
   unique?: boolean; // 배열이 고유한 요소만 포함해야 하는지 여부

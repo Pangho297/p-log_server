@@ -5,6 +5,9 @@ import { AccessAuth } from '@/shared/auth/access-auth.decorator';
 import { User } from '@/shared/auth/user.decorator';
 import { CreatePostInputDto } from './dto/create-post-input.dto';
 import { PostDto } from './post.entity';
+import { CombinedPaginate } from '@/shared/dto/combined-paginate.dto';
+import { ApiCombinedPaginateResponse, QueryParams } from '@/shared/decorator';
+import { GetPostListInputDto } from './dto/get-post-list-input.dto';
 
 @ApiTags('📄 게시글')
 @Controller('post')
@@ -38,8 +41,25 @@ export class PostController {
   }
 
   @Get()
-  getPostList() {
-    return console.log('게시글 목록 조회');
+  @ApiCombinedPaginateResponse(PostDto)
+  @ApiOperation({
+    summary: '게시글 목록 조회',
+    description: `
+## 게시글 목록 조회 시 다음과 같은 과정이 진행됩니다.
+1. 요청 시 입력 받은 **limit** 정규화 (페이지 사이즈는 최소 20개 ~ 최대 100개),
+2. **cursor**를 입력받은 경우 해당 값은 디코드하여 **createdAt**과 **id**로 변환
+3. 변환한 값은 페이지네이트 정렬에 사용
+4. 정렬 시 조건은 다음과 같음 \`(created_at < cursor.createdAt) OR (created_at = cursor.createdAt AND id < cursor.id)\`
+5. DB 데이터 조회 시 **limit** + 1의 값으로 다음 페이지 값이 존재하는지 체크
+6. 조회된 내용은 **items** 배열로 반환
+7. 페이지네이트 값은 **meta**로 반환
+8. 클라이언트 측은 다음 페이지 조회 시도 시 반드시 **meta**에 존재하는 **nextCursor** 값 사용
+    `,
+  })
+  async getPostList(
+    @QueryParams() query: GetPostListInputDto,
+  ): Promise<CombinedPaginate<PostDto>> {
+    return await this.postService.getPostList(query);
   }
 
   @Get(':slug')

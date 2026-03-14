@@ -4,7 +4,7 @@ import { PaginateOutputDto } from './paginate-output.dto';
 export class CombinedPaginate<T> {
   @ArrayProperty({
     type: Object,
-    description: '페이지 네이트가 적용된 리스트 목록',
+    description: '데이터 목록',
   })
   items: T[];
 

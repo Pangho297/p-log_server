@@ -3,6 +3,13 @@ import { CreatePostInputDto } from './dto/create-post-input.dto';
 import { PostRepository } from './post.repository';
 import { PostDto } from './post.entity';
 import { UnauthorizedException } from '@/shared/exceptions/validation';
+import {
+  createCursorMeta,
+  decodeCursor,
+  normalizeLimit,
+} from '@/shared/utils/paginate';
+import { GetPostListInputDto } from './dto/get-post-list-input.dto';
+import { CombinedPaginate } from '@/shared/dto/combined-paginate.dto';
 
 @Injectable()
 export class PostService {
@@ -17,7 +24,15 @@ export class PostService {
     return post;
   }
 
-  async getPostList() {}
+  async getPostList(
+    query: GetPostListInputDto,
+  ): Promise<CombinedPaginate<PostDto>> {
+    const limit = await normalizeLimit(query.limit);
+    const cursor = query.cursor ? await decodeCursor(query.cursor) : undefined;
+    const rows = await this.postRepository.getPostList({ limit, cursor });
+
+    return createCursorMeta(rows, limit);
+  }
 
   async getPostBySlug() {}
 

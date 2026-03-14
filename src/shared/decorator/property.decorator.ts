@@ -247,7 +247,7 @@ export function ArrayProperty<T>(
   );
 
   if (!isPrimitiveType(type)) {
-    decorators.push(Type(type));
+    decorators.push(Type(type as any));
   }
 
   decorators.push(

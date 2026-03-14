@@ -1,6 +1,7 @@
 import { BadRequestException } from '@nestjs/common';
 import { EncodeCursorInput } from '../dto/encode-cursor-input.dto';
 import { DecodeCursorOutputDto } from '../dto/decode-cursor-output.dto';
+import { CombinedPaginate } from '../dto/combined-paginate.dto';
 
 export async function normalizeLimit(raw?: number): Promise<number> {
   const DEFAULT_LIMIT = 20;
@@ -36,4 +37,28 @@ export async function decodeCursor(
   } catch {
     throw new BadRequestException('cursor 형식이 올바르지 않습니다.');
   }
+}
+
+export function createCursorMeta<T extends DecodeCursorOutputDto>(
+  rows: T[],
+  limit: number,
+): CombinedPaginate<T> {
+  const hasNext = rows.length > limit;
+  const items = hasNext ? rows.slice(0, limit) : rows;
+  const nextCursor =
+    hasNext && items.length > 0
+      ? encodeCursor({
+          createdAt: items[items.length - 1].createdAt.toISOString(),
+          id: items[items.length - 1].id,
+        })
+      : null;
+
+  return {
+    items,
+    meta: {
+      limit,
+      hasNext,
+      nextCursor,
+    },
+  };
 }

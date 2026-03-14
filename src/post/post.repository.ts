@@ -7,6 +7,8 @@ import { makeSuffix } from './utils';
 import { BlogException } from '@/shared/exceptions/define/blog.exception';
 import { PostDto } from './post.entity';
 import slugify from '@sindresorhus/slugify';
+import { DecodeCursorOutputDto } from '@/shared/dto/decode-cursor-output.dto';
+import { and, desc, eq, lt, or } from 'drizzle-orm';
 
 export class PostRepository {
   constructor(
@@ -56,5 +58,47 @@ export class PostRepository {
     }
 
     throw new BlogException('POST', 'CREATE_SLUG');
+  }
+
+  async getPostList(params: {
+    limit: number;
+    cursor?: DecodeCursorOutputDto;
+  }): Promise<PostDto[]> {
+    const { limit, cursor } = params;
+    const postModel = schema.post_model;
+
+    /** 커서 조건 (다음 페이지)
+     * - 정렬: created_at DESC, id DESC
+     * - 다음 페이지: (created_at < cursor.createdAt) OR (created_at = cursor.createdAt AND id < cursor.id)
+     */
+    const cursorCondition = cursor
+      ? or(
+          lt(postModel.createdAt, cursor.createdAt),
+          and(
+            eq(postModel.createdAt, cursor.createdAt),
+            lt(postModel.id, cursor.id),
+          ),
+        )
+      : undefined;
+
+    /** limit + 1 조회로 hasNext 계산 */
+    const rows = await this.db
+      .select({
+        id: postModel.id,
+        userId: postModel.userId,
+        slug: postModel.slug,
+        title: postModel.title,
+        content: postModel.content,
+        tags: postModel.tags,
+        createdAt: postModel.createdAt,
+        updatedAt: postModel.updatedAt,
+        deletedAt: postModel.deletedAt,
+      })
+      .from(postModel)
+      .where(cursorCondition)
+      .orderBy(desc(postModel.createdAt), desc(postModel.id))
+      .limit(limit + 1);
+
+    return rows;
   }
 }
