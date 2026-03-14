@@ -2,6 +2,7 @@ import {
   ArgumentsHost,
   BadRequestException,
   ExceptionFilter,
+  HttpException,
   HttpStatus,
   NotFoundException,
 } from '@nestjs/common';
@@ -70,31 +71,44 @@ export class AllInOneExceptionFilter implements ExceptionFilter {
       return;
     }
 
-    // 로깅
-    const { ip, url, method, headers, query, params, body } = request;
+    const isHttp = exception instanceof HttpException;
+    const isDev = process.env.SERVER_ENV === 'development';
 
-    console.log(body);
-    console.log(query);
-    console.log(url);
-    console.log(ip);
-    console.log(exception);
-    console.log(exception.message);
+    const status = isHttp
+      ? exception.getStatus()
+      : HttpStatus.INTERNAL_SERVER_ERROR;
+
+    const responseBody = isHttp
+      ? exception.getResponse()
+      : {
+          message: 'DB 요청 처리 중 오류가 발생했습니다',
+          dbError: {
+            name: exception?.name,
+            code: exception?.code ?? exception?.cause?.code, // ECONNREFUSED, 23505
+            message: exception?.message,
+            detail: isDev ? exception?.cause?.detail : undefined, // 개발 환경에서만 노출, 그렇지 않을 경우 민감 정보 노출 위험 존재
+          },
+        };
+
+    const message =
+      typeof responseBody === 'string'
+        ? responseBody
+        : ((responseBody as any)?.message ?? '예상치 못한 오류 발생');
+
+    // 로깅
+    console.error({
+      path: request.url,
+      method: request.method,
+      status,
+      exception,
+    });
 
     // 500 에러 처리
-    response.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
-      ip,
-      url,
-      method,
-      headers,
-      query,
-      params,
-      body,
-      exception,
-      statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
-      message: exception.message,
-      response: exception.getResponse(),
+    response.status(status).json({
+      statusCode: status,
+      message,
+      path: request.url,
       timestamp: new Date().toISOString(),
-      error: '서버 오류가 발생했습니다.',
     });
   }
 }
