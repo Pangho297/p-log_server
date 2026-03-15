@@ -10,6 +10,7 @@ import {
 } from '@/shared/utils/paginate';
 import { GetPostListInputDto } from './dto/get-post-list-input.dto';
 import { CombinedPaginate } from '@/shared/dto/combined-paginate.dto';
+import { PostOutputDto } from './dto/post-output.dto';
 
 @Injectable()
 export class PostService {
@@ -26,15 +27,40 @@ export class PostService {
 
   async getPostList(
     query: GetPostListInputDto,
-  ): Promise<CombinedPaginate<PostDto>> {
+  ): Promise<CombinedPaginate<PostOutputDto>> {
     const limit = await normalizeLimit(query.limit);
     const cursor = query.cursor ? await decodeCursor(query.cursor) : undefined;
     const rows = await this.postRepository.getPostList({ limit, cursor });
 
-    return createCursorMeta(rows, limit);
+    const mapper = rows.map(
+      (row) =>
+        ({
+          id: row.id,
+          userId: row.userId,
+          slug: row.slug,
+          title: row.title,
+          content: row.content,
+          tags: row.tags,
+          createdAt: row.createdAt,
+        }) satisfies PostOutputDto,
+    );
+
+    return createCursorMeta(mapper, limit);
   }
 
-  async getPostBySlug() {}
+  async getPostBySlug(slug: string): Promise<PostOutputDto> {
+    const row = await this.postRepository.getPostBySlug(slug);
+
+    return {
+      id: row.id,
+      userId: row.userId,
+      slug: row.slug,
+      title: row.title,
+      content: row.content,
+      tags: row.tags,
+      createdAt: row.createdAt,
+    } satisfies PostOutputDto;
+  }
 
   async update() {}
 

@@ -1,14 +1,14 @@
 import { DRIZZLE_DB } from '@/shared/db/db.token';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import * as schema from '@/shared/db/schema';
-import { Inject } from '@nestjs/common';
+import { Inject, NotFoundException } from '@nestjs/common';
 import { CreatePostInputDto } from './dto/create-post-input.dto';
 import { makeSuffix } from './utils';
 import { BlogException } from '@/shared/exceptions/define/blog.exception';
 import { PostDto } from './post.entity';
 import slugify from '@sindresorhus/slugify';
 import { DecodeCursorOutputDto } from '@/shared/dto/decode-cursor-output.dto';
-import { and, desc, eq, lt, or } from 'drizzle-orm';
+import { and, desc, eq, isNull, lt, or } from 'drizzle-orm';
 
 export class PostRepository {
   constructor(
@@ -29,7 +29,7 @@ export class PostRepository {
     const base = slugBase || 'post'; // 제목이 전부 제거되는 경우 대비
 
     for (let attempt = 0; attempt < 3; attempt += 1) {
-      const slug = `${base}-${makeSuffix()}`;
+      const slug = `${base}_${makeSuffix()}`;
 
       try {
         const [row] = await this.db
@@ -49,6 +49,7 @@ export class PostRepository {
         // slug unique 인덱스 충돌이면 재시도, 그 외 에러는 즉시 throw
         if (
           error?.code === '23505' &&
+          error?.constraint === 'post_slug_uq' &&
           String(error?.detail).includes('(slug)')
         ) {
           continue;
@@ -100,5 +101,19 @@ export class PostRepository {
       .limit(limit + 1);
 
     return rows;
+  }
+
+  async getPostBySlug(slug: string): Promise<PostDto> {
+    const postModel = schema.post_model;
+
+    const row = await this.db.query.post_model.findFirst({
+      where: and(eq(postModel.slug, slug), isNull(postModel.deletedAt)),
+    });
+
+    if (!row) {
+      throw new NotFoundException('게시글이 존재하지 않습니다.');
+    }
+
+    return row;
   }
 }

@@ -34,7 +34,9 @@ export const post_model = pgTable(
   },
   (table) => [
     index('post_user_id_idx').on(table.userId),
-    uniqueIndex('post_slug_uq').on(table.slug),
+    uniqueIndex('post_slug_uq')
+      .on(table.slug)
+      .where(sql`${table.deletedAt} IS NULL`),
     index('post_created_at_idx').on(table.createdAt),
   ],
 );

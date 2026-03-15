@@ -1,5 +1,18 @@
-import { Body, Controller, Delete, Get, Patch, Post } from '@nestjs/common';
-import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+} from '@nestjs/common';
+import {
+  ApiOkResponse,
+  ApiOperation,
+  ApiParam,
+  ApiTags,
+} from '@nestjs/swagger';
 import { PostService } from './post.service';
 import { AccessAuth } from '@/shared/auth/access-auth.decorator';
 import { User } from '@/shared/auth/user.decorator';
@@ -8,6 +21,7 @@ import { PostDto } from './post.entity';
 import { CombinedPaginate } from '@/shared/dto/combined-paginate.dto';
 import { ApiCombinedPaginateResponse, QueryParams } from '@/shared/decorator';
 import { GetPostListInputDto } from './dto/get-post-list-input.dto';
+import { PostOutputDto } from './dto/post-output.dto';
 
 @ApiTags('📄 게시글')
 @Controller('post')
@@ -58,13 +72,30 @@ export class PostController {
   })
   async getPostList(
     @QueryParams() query: GetPostListInputDto,
-  ): Promise<CombinedPaginate<PostDto>> {
+  ): Promise<CombinedPaginate<PostOutputDto>> {
     return await this.postService.getPostList(query);
   }
 
   @Get(':slug')
-  getPostBySlug() {
-    return console.log('게시글 상세 조회');
+  @ApiParam({
+    name: 'slug',
+    description: '게시글 식별 slug',
+  })
+  @ApiOkResponse({
+    type: PostDto,
+  })
+  @ApiOperation({
+    summary: '게시글 상세 조회',
+    description: `
+## 게시글 상세 조회 시 다음과 같은 과정이 진행됩니다.
+1. **slug**를 기준으로 DB에서 검색
+2. 발견된 게시글 정보 반환
+3. 없는 경우 404 NotFound 에러 반환
+4. (예정) 조회수 추가를 위한 **view** 추가
+    `,
+  })
+  async getPostBySlug(@Param('slug') slug: string): Promise<PostOutputDto> {
+    return await this.postService.getPostBySlug(slug);
   }
 
   @Patch(':slug')
