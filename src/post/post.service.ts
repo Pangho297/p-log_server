@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { CreatePostInputDto } from './dto/create-post-input.dto';
 import { PostRepository } from './post.repository';
-import { PostDto } from './post.entity';
 import { UnauthorizedException } from '@/shared/exceptions/validation';
 import {
   createCursorMeta,
@@ -11,18 +10,35 @@ import {
 import { GetPostListInputDto } from './dto/get-post-list-input.dto';
 import { CombinedPaginate } from '@/shared/dto/combined-paginate.dto';
 import { PostOutputDto } from './dto/post-output.dto';
+import { UpdatePostInputDto } from './dto/update-post-input.dto';
+import { PostDto } from './post.entity';
 
 @Injectable()
 export class PostService {
   constructor(private readonly postRepository: PostRepository) {}
 
-  async create(input: CreatePostInputDto, userId?: string): Promise<PostDto> {
+  private mappingRowData(row: PostDto): PostOutputDto {
+    return {
+      id: row.id,
+      userId: row.userId,
+      slug: row.slug,
+      title: row.title,
+      content: row.content,
+      tags: row.tags,
+      createdAt: row.createdAt,
+    };
+  }
+
+  async create(
+    input: CreatePostInputDto,
+    userId?: string,
+  ): Promise<PostOutputDto> {
     if (!userId) {
       throw new UnauthorizedException('사용자를 조회할 수 없습니다.');
     }
 
     const post = await this.postRepository.create(input, userId);
-    return post;
+    return this.mappingRowData(post);
   }
 
   async getPostList(
@@ -33,16 +49,7 @@ export class PostService {
     const rows = await this.postRepository.getPostList({ limit, cursor });
 
     const mapper = rows.map(
-      (row) =>
-        ({
-          id: row.id,
-          userId: row.userId,
-          slug: row.slug,
-          title: row.title,
-          content: row.content,
-          tags: row.tags,
-          createdAt: row.createdAt,
-        }) satisfies PostOutputDto,
+      (row) => this.mappingRowData(row) satisfies PostOutputDto,
     );
 
     return createCursorMeta(mapper, limit);
@@ -62,7 +69,18 @@ export class PostService {
     } satisfies PostOutputDto;
   }
 
-  async update() {}
+  async update(
+    userId: string,
+    slug: string,
+    input: UpdatePostInputDto,
+  ): Promise<PostOutputDto> {
+    const row = await this.postRepository.update(userId, slug, input);
 
-  async delete() {}
+    return this.mappingRowData(row);
+  }
+
+  async delete(userId: string, slug: string): Promise<{ success: boolean }> {
+    await this.postRepository.delete(userId, slug);
+    return { success: true };
+  }
 }

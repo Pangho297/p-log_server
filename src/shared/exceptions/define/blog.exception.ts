@@ -21,6 +21,16 @@ export const errorMapper = {
       statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
       errorCode: 'POST_10001',
     },
+    POST_NOT_FOUND: {
+      errorMessage: '게시글을 조회하지 못했습니다.',
+      statusCode: HttpStatus.NOT_FOUND,
+      errorCode: 'POST_10002',
+    },
+    INPUT_IS_EMPTY: {
+      errorMessage: '입력값이 존재하지 않습니다.',
+      statusCode: HttpStatus.BAD_REQUEST,
+      errorCode: 'POST_10003',
+    },
   },
 } as const satisfies ErrorTypeShape;
 

@@ -9,6 +9,7 @@ import { PostDto } from './post.entity';
 import slugify from '@sindresorhus/slugify';
 import { DecodeCursorOutputDto } from '@/shared/dto/decode-cursor-output.dto';
 import { and, desc, eq, isNull, lt, or } from 'drizzle-orm';
+import { UpdatePostInputDto } from './dto/update-post-input.dto';
 
 export class PostRepository {
   constructor(
@@ -96,7 +97,7 @@ export class PostRepository {
         deletedAt: postModel.deletedAt,
       })
       .from(postModel)
-      .where(cursorCondition)
+      .where(and(cursorCondition, isNull(postModel.deletedAt)))
       .orderBy(desc(postModel.createdAt), desc(postModel.id))
       .limit(limit + 1);
 
@@ -112,6 +113,84 @@ export class PostRepository {
 
     if (!row) {
       throw new NotFoundException('게시글이 존재하지 않습니다.');
+    }
+
+    return row;
+  }
+
+  async update(
+    userId: string,
+    slug: string,
+    input: UpdatePostInputDto,
+  ): Promise<PostDto> {
+    const postModel = schema.post_model;
+
+    const hasTitle = input.title !== undefined;
+    const hasContent = input.content !== undefined;
+    const hasTags = input.tags !== undefined;
+
+    if (!hasTitle && !hasContent && !hasTags) {
+      throw new BlogException('POST', 'INPUT_IS_EMPTY');
+    }
+
+    // 2) 들어온 필드만 유효성 검사
+    if (hasTitle && !input.title?.trim()) {
+      throw new BlogException('POST', 'INPUT_IS_EMPTY');
+    }
+
+    if (hasContent && !input.content?.trim()) {
+      throw new BlogException('POST', 'INPUT_IS_EMPTY');
+    }
+
+    if (
+      input.tags &&
+      (input.tags.length === 0 || input.tags.some((tag) => !tag?.trim()))
+    ) {
+      throw new BlogException('POST', 'INPUT_IS_EMPTY');
+    }
+
+    const [row] = await this.db
+      .update(postModel)
+      .set({
+        title: input.title,
+        content: input.content,
+        tags: input.tags,
+      })
+      .where(
+        and(
+          eq(postModel.userId, userId),
+          eq(postModel.slug, slug),
+          isNull(postModel.deletedAt),
+        ),
+      )
+      .returning();
+
+    if (!row) {
+      throw new BlogException('POST', 'POST_NOT_FOUND');
+    }
+
+    return row;
+  }
+
+  async delete(userId: string, slug: string) {
+    const postModel = schema.post_model;
+
+    const [row] = await this.db
+      .update(postModel)
+      .set({
+        deletedAt: new Date(),
+      })
+      .where(
+        and(
+          eq(postModel.userId, userId),
+          eq(postModel.slug, slug),
+          isNull(postModel.deletedAt),
+        ),
+      )
+      .returning();
+
+    if (!row) {
+      throw new BlogException('POST', 'POST_NOT_FOUND');
     }
 
     return row;

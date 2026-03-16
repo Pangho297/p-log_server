@@ -22,6 +22,7 @@ import { CombinedPaginate } from '@/shared/dto/combined-paginate.dto';
 import { ApiCombinedPaginateResponse, QueryParams } from '@/shared/decorator';
 import { GetPostListInputDto } from './dto/get-post-list-input.dto';
 import { PostOutputDto } from './dto/post-output.dto';
+import { UpdatePostInputDto } from './dto/update-post-input.dto';
 
 @ApiTags('📄 게시글')
 @Controller('post')
@@ -50,7 +51,7 @@ export class PostController {
   async create(
     @Body() body: CreatePostInputDto,
     @User() userId?: string,
-  ): Promise<PostDto> {
+  ): Promise<PostOutputDto> {
     return await this.postService.create(body, userId);
   }
 
@@ -99,12 +100,38 @@ export class PostController {
   }
 
   @Patch(':slug')
-  update() {
-    return console.log('게시글 수정');
+  @AccessAuth()
+  @ApiOperation({
+    summary: '게시글 수정',
+    description: `
+## 게시글 수정 시 다음과 같은 과정이 진행됩니다.
+1. **accessToken**으로 전달받은 **userId**, **slug**를 조건으로 사용
+2. DB에서 데이터 조회, 이 때 **deletedAt**이 \`null\`인 경우만 포함
+3. 전달받은 body 필드 중 데이터가 존재하는 경우만 update 수행
+4. 성공 시 update결과를 반환
+    `,
+  })
+  async update(
+    @User() userId: string,
+    @Param('slug') slug: string,
+    @Body() body: UpdatePostInputDto,
+  ): Promise<PostOutputDto> {
+    return await this.postService.update(userId, slug, body);
   }
 
   @Delete(':slug')
-  delete() {
-    return console.log('게시글 삭제');
+  @AccessAuth()
+  @ApiOperation({
+    summary: '게시글 삭제',
+    description: `
+## 게시글 삭제 시 다음과 같은 과정이 진행됩니다.
+1. **accessToken**으로 전달받은 **userId**, **slug**를 조건으로 사용
+2. DB에서 데이터 조회, 이 때 **deletedAt**이 \`null\`인 경우만 포함
+3. 일치하는 **slug** **deletedAt**을 로직 수행 일시로 변경 (Soft-Delete)
+4. 성공 시 **success** 여부 반환
+    `,
+  })
+  async delete(@User() userId: string, @Param('slug') slug: string) {
+    return await this.postService.delete(userId, slug);
   }
 }
