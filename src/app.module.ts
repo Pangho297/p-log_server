@@ -5,9 +5,17 @@ import { ConfigModule } from './shared/config/config.module';
 import { UserModule } from './user/user.module';
 import { AuthModule } from './auth/auth.module';
 import { PostModule } from './post/post.module';
+import { ImagesModule } from './images/images.module';
 
 @Module({
-  imports: [ConfigModule, DatabaseModule, AuthModule, UserModule, PostModule],
+  imports: [
+    ConfigModule,
+    DatabaseModule,
+    AuthModule,
+    UserModule,
+    PostModule,
+    ImagesModule,
+  ],
   controllers: [],
   providers: [AppService],
 })
