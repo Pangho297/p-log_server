@@ -1,0 +1,25 @@
+import { Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+
+@Injectable()
+export class AppConfigService {
+  constructor(private readonly config: ConfigService) {}
+
+  get app() {
+    return {
+      serverEnv: this.config.getOrThrow<string>('app.serverEnv'),
+      port: this.config.getOrThrow<number>('app.port'),
+    };
+  }
+
+  get dbUrl(): string {
+    return this.config.getOrThrow<string>('db.url');
+  }
+
+  get jwtSecret() {
+    return {
+      accessSecret: this.config.getOrThrow<string>('jwt.accessSecret'),
+      refreshSecret: this.config.getOrThrow<string>('jwt.refreshSecret'),
+    };
+  }
+}

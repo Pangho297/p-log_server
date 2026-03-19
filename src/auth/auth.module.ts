@@ -6,8 +6,10 @@ import { UserRepository } from '@/user/user.repository';
 import { AuthService } from './auth.service';
 import { AuthRepository } from './auth.repository';
 import { TokenGuard } from '@/shared/auth/token.guard';
+import { AppConfigModule } from '@/shared/config/config.module';
 
 @Module({
+  imports: [AppConfigModule],
   providers: [
     TokenGuard,
     JwtService,

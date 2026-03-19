@@ -3,13 +3,13 @@ import { JwtService } from '@nestjs/jwt';
 import { AuthRepository } from './auth.repository';
 import { randomUUID } from 'crypto';
 import { JWTPayload, UUID } from '@/shared/types/common';
-import { IS_LOCAL } from '@/consts';
 import { UnauthorizedException } from '@/shared/exceptions/validation';
 import { LoginTokenDto } from './dto/login-token.dto';
 import { hasher } from '@/shared/utils/hasher';
 import { UserService } from '@/user/user.service';
 import { LoginInputDto } from './dto/login-input.dto';
 import { LogoutDto } from './dto/logout.dto';
+import { AppConfigService } from '@/shared/config/app-config.service';
 
 @Injectable()
 export class AuthService {
@@ -20,15 +20,14 @@ export class AuthService {
     private readonly jwtService: JwtService,
     private readonly userService: UserService,
     private readonly authRepository: AuthRepository,
+    private readonly appConfigService: AppConfigService,
   ) {}
 
   private signAccessToken(userId: UUID) {
     return this.jwtService.sign<JWTPayload>(
       { sub: userId, type: 'access' },
       {
-        secret: IS_LOCAL
-          ? process.env.DEV_JWT_ACCESS_SECRET
-          : process.env.JWT_ACCESS_SECRET,
+        secret: this.appConfigService.jwtSecret.accessSecret,
         expiresIn: this.ACCESS_EXPIRES_IN,
       },
     );
@@ -38,9 +37,7 @@ export class AuthService {
     return this.jwtService.sign<JWTPayload>(
       { sub: userId, jti, type: 'refresh' },
       {
-        secret: IS_LOCAL
-          ? process.env.DEV_JWT_REFRESH_SECRET
-          : process.env.JWT_REFRESH_SECRET,
+        secret: this.appConfigService.jwtSecret.refreshSecret,
         expiresIn: this.REFRESH_EXPIRES_SEC,
       },
     );
@@ -49,9 +46,7 @@ export class AuthService {
   async verifyRefreshToken(token: string) {
     try {
       const payload = this.jwtService.verify<JWTPayload>(token, {
-        secret: IS_LOCAL
-          ? process.env.DEV_JWT_REFRESH_SECRET
-          : process.env.JWT_REFRESH_SECRET,
+        secret: this.appConfigService.jwtSecret.refreshSecret,
       });
 
       if (payload.type !== 'refresh') {
@@ -67,9 +62,7 @@ export class AuthService {
   async verifyAccessToken(token: string) {
     try {
       const payload = this.jwtService.verify<JWTPayload>(token, {
-        secret: IS_LOCAL
-          ? process.env.DEV_JWT_ACCESS_SECRET
-          : process.env.JWT_ACCESS_SECRET,
+        secret: this.appConfigService.jwtSecret.accessSecret,
       });
 
       if (payload.type !== 'access') {

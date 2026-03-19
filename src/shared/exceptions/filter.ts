@@ -90,10 +90,12 @@ export class AllInOneExceptionFilter implements ExceptionFilter {
           },
         };
 
-    const message =
+    const normalizedResponseBody =
       typeof responseBody === 'string'
-        ? responseBody
-        : ((responseBody as any)?.message ?? '예상치 못한 오류 발생');
+        ? { message: responseBody }
+        : (responseBody as { message?: string; dbError?: unknown });
+
+    const message = normalizedResponseBody.message ?? '예상치 못한 오류 발생';
 
     // 로깅
     console.error({
@@ -107,6 +109,9 @@ export class AllInOneExceptionFilter implements ExceptionFilter {
     response.status(status).json({
       statusCode: status,
       message,
+      ...(normalizedResponseBody?.dbError
+        ? { dbError: normalizedResponseBody.dbError }
+        : {}),
       path: request.url,
       timestamp: new Date().toISOString(),
     });

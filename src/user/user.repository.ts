@@ -30,7 +30,7 @@ export class UserRepository {
         email: row.email,
       };
     } catch (e) {
-      if (e?.code === '23505') {
+      if (e?.cause?.code === '23505') {
         throw new ConflictException('이미 사용 중인 이메일 입니다.');
       }
 
@@ -49,7 +49,6 @@ export class UserRepository {
   }
 
   async verifyAccount(input: VerifyUserInputDto): Promise<UserDto> {
-    console.log({ input });
     const userModel = schema.user_model;
     const row = await this.db.query.user_model.findFirst({
       where: and(
