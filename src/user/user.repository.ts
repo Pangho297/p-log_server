@@ -14,6 +14,7 @@ import { UserDto } from './user.entity';
 
 @Injectable()
 export class UserRepository {
+  private readonly userModel = schema.user_model;
   constructor(
     @Inject(DRIZZLE_DB)
     private readonly db: NodePgDatabase<typeof schema>,
@@ -22,9 +23,11 @@ export class UserRepository {
   // 유저 생성
   async create(input: CreateUserInputDto): Promise<UserDto> {
     // service 계층에서 비밀번호 해싱되어 받아 DB에 저장
-    const userModel = schema.user_model;
     try {
-      const [row] = await this.db.insert(userModel).values(input).returning(); // 생성 결과물 배출
+      const [row] = await this.db
+        .insert(this.userModel)
+        .values(input)
+        .returning(); // 생성 결과물 배출
       return {
         id: row.id,
         email: row.email,
@@ -40,20 +43,18 @@ export class UserRepository {
 
   // 유저 조회 예시 코드
   async findUserByEmail(email: string) {
-    const userModel = schema.user_model;
     const row = await this.db.query.user_model.findFirst({
-      where: eq(userModel.email, email),
+      where: eq(this.userModel.email, email),
     });
 
     return row ?? null;
   }
 
   async verifyAccount(input: VerifyUserInputDto): Promise<UserDto> {
-    const userModel = schema.user_model;
     const row = await this.db.query.user_model.findFirst({
       where: and(
-        eq(userModel.email, input.email),
-        eq(userModel.password, input.password),
+        eq(this.userModel.email, input.email),
+        eq(this.userModel.password, input.password),
       ),
     });
 

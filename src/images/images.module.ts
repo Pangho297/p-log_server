@@ -9,6 +9,6 @@ import { ImagesRepository } from './images.repository';
   imports: [AuthModule, AppConfigModule],
   providers: [ImagesService, ImagesRepository],
   controllers: [ImagesController],
-  exports: [ImagesService],
+  exports: [ImagesService, ImagesRepository],
 })
 export class ImagesModule {}

@@ -13,21 +13,21 @@ import { hasher } from '@/shared/utils/hasher';
 
 @Injectable()
 export class AuthRepository {
+  private readonly refreshTokenModel = schema.refresh_token_model;
   constructor(
     @Inject(DRIZZLE_DB)
     private readonly db: NodePgDatabase<typeof schema>,
   ) {}
 
   async saveToken(input: SaveTokenInputDto): Promise<RefreshTokenEntity> {
-    const refreshTokenModel = schema.refresh_token_model;
     const [row] = await this.db
-      .insert(refreshTokenModel)
+      .insert(this.refreshTokenModel)
       .values({
         ...input,
         revokedAt: input.revokedAt ?? null,
       })
       .onConflictDoUpdate({
-        target: refreshTokenModel.jti,
+        target: this.refreshTokenModel.jti,
         set: {
           tokenHash: input.tokenHash,
           expiresAt: input.expiresAt,
@@ -42,15 +42,14 @@ export class AuthRepository {
   async findActiveByJti(
     input: FindActiveByJtiInputDto,
   ): Promise<RefreshTokenEntity | null> {
-    const refreshTokenModel = schema.refresh_token_model;
     const [row] = await this.db
       .select()
-      .from(refreshTokenModel)
+      .from(this.refreshTokenModel)
       .where(
         and(
           eq(schema.refresh_token_model.jti, input.jti),
-          isNull(refreshTokenModel.revokedAt),
-          gt(refreshTokenModel.expiresAt, new Date()),
+          isNull(this.refreshTokenModel.revokedAt),
+          gt(this.refreshTokenModel.expiresAt, new Date()),
         ),
       );
 
@@ -60,23 +59,21 @@ export class AuthRepository {
   async revokeTokenByJti(
     input: RevokeTokenByJtiInput,
   ): Promise<RefreshTokenEntity | null> {
-    const refreshTokenModel = schema.refresh_token_model;
     const [row] = await this.db
-      .update(refreshTokenModel)
+      .update(this.refreshTokenModel)
       .set({ revokedAt: new Date() })
-      .where(eq(refreshTokenModel.jti, input.jti))
+      .where(eq(this.refreshTokenModel.jti, input.jti))
       .returning();
 
     return row ?? null;
   }
 
   async rotateRefreshToken(input: RotateRefreshTokenInputDto) {
-    const refreshTokenModel = schema.refresh_token_model;
     await this.db.transaction(async (tx) => {
       const [row] = await tx
         .select()
-        .from(refreshTokenModel)
-        .where(eq(refreshTokenModel.jti, input.oldJti));
+        .from(this.refreshTokenModel)
+        .where(eq(this.refreshTokenModel.jti, input.oldJti));
 
       if (!row || row.revokedAt)
         throw new UnauthorizedException('Refresh Token이 유효하지 않습니다.');
@@ -88,23 +85,23 @@ export class AuthRepository {
         throw new UnauthorizedException('Refresh Token이 일치하지 않습니다.');
 
       const revoked = await tx
-        .update(refreshTokenModel)
+        .update(this.refreshTokenModel)
         .set({ revokedAt: new Date() })
         .where(
           and(
-            eq(refreshTokenModel.jti, input.oldJti),
-            isNull(refreshTokenModel.revokedAt),
-            gt(refreshTokenModel.expiresAt, new Date()),
+            eq(this.refreshTokenModel.jti, input.oldJti),
+            isNull(this.refreshTokenModel.revokedAt),
+            gt(this.refreshTokenModel.expiresAt, new Date()),
           ),
         )
-        .returning({ jti: refreshTokenModel.jti });
+        .returning({ jti: this.refreshTokenModel.jti });
 
       if (revoked.length === 0) {
         // 이미 다른 요청이 먼저 재발급에 사용;
         throw new UnauthorizedException('이미 사용된 Refresh Token입니다.');
       }
 
-      await tx.insert(refreshTokenModel).values(input.newRow);
+      await tx.insert(this.refreshTokenModel).values(input.newRow);
     });
   }
 }

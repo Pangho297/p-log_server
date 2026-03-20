@@ -12,10 +12,15 @@ import { CombinedPaginate } from '@/shared/dto/combined-paginate.dto';
 import { PostOutputDto } from './dto/post-output.dto';
 import { UpdatePostInputDto } from './dto/update-post-input.dto';
 import { PostDto } from './post.entity';
+import { ImagesRepository } from '@/images/images.repository';
+import { extractCloudflareImageIds } from './utils';
 
 @Injectable()
 export class PostService {
-  constructor(private readonly postRepository: PostRepository) {}
+  constructor(
+    private readonly postRepository: PostRepository,
+    private readonly imagesRepository: ImagesRepository,
+  ) {}
 
   private mappingRowData(row: PostDto): PostOutputDto {
     return {
@@ -38,6 +43,18 @@ export class PostService {
     }
 
     const post = await this.postRepository.create(input, userId);
+
+    /** 업로드 완료된 이미지 목록
+     *
+     * - 실제 업로드된 이미지들은 모두 상태를 attached로 변경
+     * - 업로드되진 않았지만 postId가 같다면 delete_pending으로 변경
+     */
+    const usedIds = extractCloudflareImageIds(input.content);
+    await this.imagesRepository.markImageStatusByPublish({
+      ownerUserId: userId,
+      postId: post.id,
+      usedIds,
+    });
     return this.mappingRowData(post);
   }
 
