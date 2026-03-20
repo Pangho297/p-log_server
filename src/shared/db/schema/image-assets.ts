@@ -14,7 +14,7 @@ export const imageStatusEnum = pgEnum('image_status', [
   'deleted', // 삭제됨
 ]);
 
-export const imageAssets = pgTable(
+export const image_assets_model = pgTable(
   'image_assets',
   {
     id: uuid('id').defaultRandom().primaryKey(),

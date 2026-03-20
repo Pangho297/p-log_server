@@ -32,6 +32,13 @@ export const errorMapper = {
       errorCode: 'POST_10003',
     },
   },
+  IMAGES: {
+    FAIL_TO_UPLOAD: {
+      errorMessage: 'Cloudflare Direct Upload 생성 실패',
+      statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+      errorCode: 'IMAGES_10000',
+    },
+  },
 } as const satisfies ErrorTypeShape;
 
 export type ErrorMapper = typeof errorMapper;

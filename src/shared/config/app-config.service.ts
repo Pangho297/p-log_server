@@ -22,4 +22,12 @@ export class AppConfigService {
       refreshSecret: this.config.getOrThrow<string>('jwt.refreshSecret'),
     };
   }
+
+  get cloudflare() {
+    return {
+      accountId: this.config.getOrThrow<string>('cloudflare.accountId'),
+      token: this.config.getOrThrow<string>('cloudflare.token'),
+      accountHash: this.config.getOrThrow<string>('cloudflare.accountHash'),
+    };
+  }
 }

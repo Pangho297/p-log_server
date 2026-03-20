@@ -17,3 +17,14 @@ export interface JWTPayload {
   /** 토큰 만료 시간 (Expiration Time) (Unix) */
   exp?: number;
 }
+
+export interface CloudflareDirectURLResponse {
+  result: {
+    id: string;
+    uploadURL: string;
+  };
+  result_info: object | null;
+  success: boolean;
+  errors: any[];
+  messages: any[];
+}

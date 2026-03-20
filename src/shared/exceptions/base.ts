@@ -16,6 +16,7 @@ export class BaseException extends HttpException implements IBaseException {
     { group, payload }: { group?: string; payload?: any } = {},
   ) {
     super(errorMessage, statusCode);
+    this.statusCode = statusCode;
     this.errorCode = errorCode;
     this.timestamp = new Date().toISOString();
     this.group = group ?? 'ERROR';
