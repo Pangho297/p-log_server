@@ -43,6 +43,11 @@ export class ImagesRepository {
             and(
               eq(this.imageAssetsModel.ownerUserId, ownerUserId),
               eq(this.imageAssetsModel.postId, postId),
+              inArray(this.imageAssetsModel.status, [
+                'temp',
+                'delete_pending',
+                'attached',
+              ]),
               inArray(this.imageAssetsModel.imageId, usedIds),
             ),
           );
@@ -59,6 +64,7 @@ export class ImagesRepository {
           and(
             eq(this.imageAssetsModel.ownerUserId, ownerUserId),
             eq(this.imageAssetsModel.postId, postId),
+            inArray(this.imageAssetsModel.status, ['temp', 'attached']),
             usedIds.length > 0
               ? notInArray(this.imageAssetsModel.imageId, usedIds)
               : sql`true`,
@@ -67,18 +73,23 @@ export class ImagesRepository {
     });
   }
 
-  async markImageStatusByDeleted(imageId: string) {
+  async markImageStatusByDeleted(id: string) {
     await this.db
       .update(this.imageAssetsModel)
       .set({
         status: 'deleted',
         updatedAt: new Date(),
       })
-      .where(eq(this.imageAssetsModel.id, imageId));
+      .where(
+        and(
+          eq(this.imageAssetsModel.id, id),
+          eq(this.imageAssetsModel.status, 'delete_pending'),
+        ),
+      );
   }
 
-  async deleteImages() {
-    await this.db
+  async getDeletePendingImages() {
+    return await this.db
       .select()
       .from(this.imageAssetsModel)
       .where(
