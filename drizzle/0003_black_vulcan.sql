@@ -1,0 +1,1 @@
+ALTER TABLE "post_model" ALTER COLUMN "thumbnail" SET NOT NULL;

@@ -13,7 +13,8 @@ import { PostOutputDto } from './dto/post-output.dto';
 import { UpdatePostInputDto } from './dto/update-post-input.dto';
 import { PostDto } from './post.entity';
 import { ImagesRepository } from '@/images/images.repository';
-import { extractCloudflareImageIds } from './utils';
+import { extractCloudflareImageIds, extractCloudflareImageUrls } from './utils';
+import { defaultThumbnail } from '@/shared/constants/post';
 
 @Injectable()
 export class PostService {
@@ -42,7 +43,17 @@ export class PostService {
       throw new UnauthorizedException('사용자를 조회할 수 없습니다.');
     }
 
-    const post = await this.postRepository.create(input, userId);
+    const extractImageUrl = extractCloudflareImageUrls(input.content)[0];
+
+    const randomIdx = Math.floor(Math.random() * 5);
+    const randomThumbnail = defaultThumbnail[randomIdx];
+
+    const addThumbnailInput = {
+      ...input,
+      thumbnail: extractImageUrl ? extractImageUrl : randomThumbnail,
+    };
+
+    const post = await this.postRepository.create(addThumbnailInput, userId);
 
     /** 업로드 완료된 이미지 목록
      *

@@ -24,3 +24,23 @@ export function extractCloudflareImageIds(markdown: string): string[] {
 
   return [...ids];
 }
+
+/** Cloudflare 이미지 Id가 아닌 이미지 Url들을 뽑아오는 함수 */
+export function extractCloudflareImageUrls(markdown: string): string[] {
+  /**
+   * 대상 형태:
+   * - https://imagedelivery.net/<accountHash>/<imageId>/<variant>
+   * - 뒤에 쿼리스트링(?...)이 붙는 경우도 허용
+   */
+  const regex =
+    /https?:\/\/imagedelivery\.net\/[^)\s/]+\/[^)\s/]+\/[^)\s/?#]+(?:\?[^)\s#]*)?/g;
+
+  const urls = new Set<string>();
+  let m: RegExpExecArray | null;
+
+  while ((m = regex.exec(markdown)) !== null) {
+    urls.add(m[0]); // 전체 매칭 URL
+  }
+
+  return [...urls];
+}

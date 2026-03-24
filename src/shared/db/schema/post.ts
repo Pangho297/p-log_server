@@ -24,6 +24,7 @@ export const post_model = pgTable(
       .array()
       .notNull()
       .default(sql`'{}'::text[]`),
+    thumbnail: text('thumbnail').notNull(),
     createdAt: timestamp('created_at', { withTimezone: true })
       .notNull()
       .defaultNow(),

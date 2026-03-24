@@ -15,6 +15,20 @@
       "when": 1774015408990,
       "tag": "0001_military_tana_nile",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1774355595262,
+      "tag": "0002_mixed_swordsman",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1774355793695,
+      "tag": "0003_black_vulcan",
+      "breakpoints": true
     }
   ]
 }

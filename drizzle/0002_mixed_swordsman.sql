@@ -1,0 +1,1 @@
+ALTER TABLE "post_model" ADD COLUMN "thumbnail" text;

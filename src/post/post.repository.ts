@@ -16,7 +16,10 @@ export class PostRepository {
     @Inject(DRIZZLE_DB) private readonly db: NodePgDatabase<typeof schema>,
   ) {}
 
-  async create(input: CreatePostInputDto, userId: string): Promise<PostDto> {
+  async create(
+    input: CreatePostInputDto & { thumbnail: string },
+    userId: string,
+  ): Promise<PostDto> {
     const postModel = schema.post_model;
 
     // slug 생성 시 DB 충돌 방지를 위해 repository 계층에서 수행
@@ -38,6 +41,7 @@ export class PostRepository {
           .values({
             userId,
             slug,
+            thumbnail: input.thumbnail,
             title: input.title,
             content: input.content,
             tags: input.tags,
