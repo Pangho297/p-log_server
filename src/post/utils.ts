@@ -26,7 +26,8 @@ export function extractCloudflareImageIds(markdown: string): string[] {
 }
 
 /** Cloudflare 이미지 Id가 아닌 이미지 Url들을 뽑아오는 함수 */
-export function extractCloudflareImageUrls(markdown: string): string[] {
+export function extractCloudflareImageUrls(markdown?: string): string[] | null {
+  if (!markdown) return null;
   /**
    * 대상 형태:
    * - https://imagedelivery.net/<accountHash>/<imageId>/<variant>

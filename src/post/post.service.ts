@@ -43,7 +43,8 @@ export class PostService {
       throw new UnauthorizedException('사용자를 조회할 수 없습니다.');
     }
 
-    const extractImageUrl = extractCloudflareImageUrls(input.content)[0];
+    const extractImageUrls = extractCloudflareImageUrls(input.content);
+    const extractImageUrl = extractImageUrls ? extractImageUrls[0] : null;
 
     const randomIdx = Math.floor(Math.random() * 5);
     const randomThumbnail = defaultThumbnail[randomIdx];
@@ -102,7 +103,30 @@ export class PostService {
     slug: string,
     input: UpdatePostInputDto,
   ): Promise<PostOutputDto> {
-    const row = await this.postRepository.update(userId, slug, input);
+    const extractImageUrls = extractCloudflareImageUrls(input.content);
+    const extractImageUrl = extractImageUrls ? extractImageUrls[0] : null;
+
+    const randomIdx = Math.floor(Math.random() * 5);
+    const randomThumbnail = defaultThumbnail[randomIdx];
+    const addThumbnailInput = {
+      ...input,
+      thumbnail: extractImageUrl ? extractImageUrl : randomThumbnail,
+    };
+
+    const row = await this.postRepository.update(
+      userId,
+      slug,
+      addThumbnailInput,
+    );
+
+    if (input.content) {
+      const usedIds = extractCloudflareImageIds(input.content);
+      await this.imagesRepository.markImageStatusByPublish({
+        ownerUserId: userId,
+        postId: row.id,
+        usedIds,
+      });
+    }
 
     return this.mappingRowData(row);
   }

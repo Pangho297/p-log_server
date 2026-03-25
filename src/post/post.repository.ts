@@ -125,7 +125,7 @@ export class PostRepository {
   async update(
     userId: string,
     slug: string,
-    input: UpdatePostInputDto,
+    input: UpdatePostInputDto & { thumbnail: string },
   ): Promise<PostDto> {
     const postModel = schema.post_model;
 
