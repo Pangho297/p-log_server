@@ -37,7 +37,7 @@ export class PostController {
     description: `
 ## 게시글 생성 시 다음과 같은 과정이 진행됩니다.
 
-1. 요청 헤더의 **Authorization**에서 **accessToken**을 가져옴
+1. 요청 쿠키의 **access_token**에서 **accessToken**을 가져옴
 2. 가져온 **accessToken** 검증하여 userId를 조회
 3. userId가 존재하지 않는 경우 401에러 반환
 4. 사용자 입력 값 중 **title** 로 **slug** 생성

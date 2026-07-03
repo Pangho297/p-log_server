@@ -1,8 +1,8 @@
 import { BooleanProperty } from '@/shared/decorator';
 
-export class LogoutDto {
+export class AuthSuccessDto {
   @BooleanProperty({
-    description: '인증 쿠키 만료 처리 성공 여부',
+    description: '인증 요청 성공 여부',
   })
   success: boolean;
 }

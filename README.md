@@ -25,6 +25,20 @@
 
 [Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
 
+## 인증 정책
+
+이 서버는 **HttpOnly Cookie 기반 JWT 인증**을 사용합니다.
+
+- 로그인/토큰 재발급 성공 시 서버가 `access_token`, `refresh_token`을 `Set-Cookie`로 내려줍니다.
+- 프론트엔드는 `accessToken`, `refreshToken`을 `localStorage`, zustand persist, 메모리 상태 등에 저장하지 않습니다.
+- 보호 API 요청은 브라우저가 자동으로 포함하는 `access_token` 쿠키로 인증합니다.
+- 프론트엔드 axios/fetch 요청에는 쿠키 포함 설정이 필요합니다.
+  - axios: `withCredentials: true`
+  - fetch: `credentials: 'include'`
+- 401 발생 시 `/auth/refresh`를 호출하고, 성공하면 실패했던 원래 요청을 재시도합니다.
+
+자세한 토큰 흐름과 Mermaid 다이어그램은 [인증 토큰 흐름 문서](./docs/auth-token-flow.md)를 참고합니다.
+
 ## Project setup
 
 ```bash

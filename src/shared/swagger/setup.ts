@@ -8,6 +8,7 @@ import { readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 import { SWAGGER_FILE_PATH } from '@/consts';
+import { ACCESS_TOKEN_COOKIE_NAME } from '@/shared/auth/utils';
 
 /** Swagger 세팅
  *
@@ -27,13 +28,14 @@ export function setupSwagger(app: INestApplication) {
     .setTitle(`Pangho's 블로그 프로젝트 API`)
     .setDescription(description)
     .setVersion('v1')
-    .addBearerAuth(
+    .addCookieAuth(
+      ACCESS_TOKEN_COOKIE_NAME,
       {
-        type: 'http',
-        name: 'Authorization',
-        in: 'header',
+        type: 'apiKey',
+        name: ACCESS_TOKEN_COOKIE_NAME,
+        in: 'cookie',
       },
-      '인증토큰',
+      'accessTokenCookie',
     )
     .addTag('🔐 인증', '/auth 인증')
     .addTag('🙋 사용자', '/user 사용자 관리')

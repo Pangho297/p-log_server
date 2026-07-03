@@ -9,29 +9,64 @@ import {
 import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { LoginInputDto } from './dto/login-input.dto';
 import { AuthService } from './auth.service';
-import { Request, Response } from 'express';
+import { CookieOptions, Request, Response } from 'express';
 import { IS_LOCAL } from '@/consts';
-import { AccessTokenDto } from './dto/access-token.dto';
 import { LogoutDto } from './dto/logout.dto';
+import { AuthSuccessDto } from './dto/auth-success.dto';
+import {
+  ACCESS_TOKEN_COOKIE_NAME,
+  getCookie,
+  REFRESH_TOKEN_COOKIE_NAME,
+} from '@/shared/auth/utils';
 
 @ApiTags('🔐 인증')
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
-  /** refreshToken을 response 헤더에 삽입해 주는 과정 */
-  private setRefreshCookie(res: Response, token: string) {
-    res.cookie('refresh_token', token, {
+  private getBaseCookieOptions(): CookieOptions {
+    return {
       httpOnly: true,
-      secure: IS_LOCAL ? false : true,
-      sameSite: 'strict',
-      path: '/auth/refresh',
+      secure: !IS_LOCAL,
+      sameSite: IS_LOCAL ? 'lax' : 'none',
+    };
+  }
+
+  /** accessToken을 response cookie에 삽입해 주는 과정 */
+  private setAccessCookie(res: Response, token: string) {
+    res.cookie(ACCESS_TOKEN_COOKIE_NAME, token, {
+      ...this.getBaseCookieOptions(),
+      path: '/',
+      maxAge: 15 * 60 * 1000,
+    });
+  }
+
+  /** refreshToken을 response cookie에 삽입해 주는 과정 */
+  private setRefreshCookie(res: Response, token: string) {
+    res.cookie(REFRESH_TOKEN_COOKIE_NAME, token, {
+      ...this.getBaseCookieOptions(),
+      path: '/auth',
       maxAge: 14 * 24 * 60 * 60 * 1000,
     });
   }
 
+  private clearAuthCookies(res: Response) {
+    res.clearCookie(ACCESS_TOKEN_COOKIE_NAME, {
+      ...this.getBaseCookieOptions(),
+      path: '/',
+    });
+    res.clearCookie(REFRESH_TOKEN_COOKIE_NAME, {
+      ...this.getBaseCookieOptions(),
+      path: '/auth',
+    });
+    res.clearCookie(REFRESH_TOKEN_COOKIE_NAME, {
+      ...this.getBaseCookieOptions(),
+      path: '/auth/refresh',
+    });
+  }
+
   @Post('login')
-  @ApiOkResponse({ type: AccessTokenDto })
+  @ApiOkResponse({ type: AuthSuccessDto })
   @ApiOperation({
     summary: '로그인',
     description: `
@@ -39,8 +74,8 @@ export class AuthController {
 
 1. 로그인 성공 시 _crypto_와 _jwt_를 이용해 **accessToken**, **refreshToken**을 생성
 2. **refreshToken**은 해싱되어 DB에 저장
-3. 클라이언트에 **accessToken**은 응답에 직접 전송
-4. **refreshToken**은 _cookie_에 담아 전송
+3. **accessToken**과 **refreshToken**은 _HttpOnly cookie_에 담아 전송
+4. 클라이언트는 토큰 값을 직접 저장하지 않고 쿠키 기반으로 인증 처리
 
 ## 클라이언트 측에서도 쿠키를 주고받기 위한 설정이 별도로 필요합니다
 - **fetch API** 의 **credentials** 설정을 **include**로 설정
@@ -50,15 +85,16 @@ export class AuthController {
   async login(
     @Body() body: LoginInputDto,
     @Res({ passthrough: true }) res: Response,
-  ): Promise<AccessTokenDto> {
+  ): Promise<AuthSuccessDto> {
     const { accessToken, refreshToken } = await this.authService.login(body);
+    this.setAccessCookie(res, accessToken);
     this.setRefreshCookie(res, refreshToken);
 
-    return { accessToken };
+    return { success: true };
   }
 
   @Post('refresh')
-  @ApiOkResponse({ type: AccessTokenDto })
+  @ApiOkResponse({ type: AuthSuccessDto })
   @ApiOperation({
     summary: '토큰 재발급',
     description: `
@@ -70,15 +106,14 @@ export class AuthController {
 3. 해당 토큰이 유효한 토큰인지 검증
 4. 올바른 토큰이라면 **accessToken**과 **refreshToken** 생성
 5. 올바르지 않은 경우 exception을 반환
-6. 로그인 때와 마찬가지로 **accessToken**은 응답에 직접 전송
-7. **refreshToken**은 _cookie_에 담아 전송
+6. 로그인 때와 마찬가지로 **accessToken**과 **refreshToken**은 _HttpOnly cookie_에 담아 전송
 `,
   })
   async refresh(
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
-  ): Promise<AccessTokenDto> {
-    const oldToken: string | undefined = req.cookies?.refresh_token;
+  ): Promise<AuthSuccessDto> {
+    const oldToken = getCookie(req.headers.cookie, REFRESH_TOKEN_COOKIE_NAME);
 
     if (!oldToken) {
       throw new BadRequestException('Refresh Token이 존재하지 않습니다.');
@@ -86,9 +121,10 @@ export class AuthController {
 
     const { accessToken, refreshToken } =
       await this.authService.refresh(oldToken);
+    this.setAccessCookie(res, accessToken);
     this.setRefreshCookie(res, refreshToken);
 
-    return { accessToken };
+    return { success: true };
   }
 
   @Post('logout')
@@ -101,14 +137,13 @@ export class AuthController {
 `,
   })
   async logout(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
-    const token = req.cookies?.refresh_token;
+    const token = getCookie(req.headers.cookie, REFRESH_TOKEN_COOKIE_NAME);
 
-    if (!token) {
-      throw new BadRequestException('Refresh Token이 존재하지 않습니다.');
+    if (token) {
+      await this.authService.logout(token);
     }
 
-    await this.authService.logout(token);
-    res.clearCookie('refresh_token', { path: '/auth/refresh' });
+    this.clearAuthCookies(res);
 
     return { success: true };
   }
