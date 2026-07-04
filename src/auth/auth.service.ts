@@ -10,6 +10,7 @@ import { UserService } from '@/user/user.service';
 import { LoginInputDto } from './dto/login-input.dto';
 import { LogoutDto } from './dto/logout.dto';
 import { AppConfigService } from '@/shared/config/app-config.service';
+import { LoginResultDto } from './dto/login-result.dto';
 
 @Injectable()
 export class AuthService {
@@ -81,7 +82,7 @@ export class AuthService {
     }
   }
 
-  async login(input: LoginInputDto): Promise<LoginTokenDto> {
+  async login(input: LoginInputDto): Promise<LoginResultDto> {
     const hashing = hasher(input.password);
 
     const user = await this.userService.verifyAccount({
@@ -103,7 +104,7 @@ export class AuthService {
       revokedAt: null,
     });
 
-    return { accessToken, refreshToken };
+    return { accessToken, refreshToken, user };
   }
 
   async refresh(oldRefreshToken: string): Promise<LoginTokenDto> {

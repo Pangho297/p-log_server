@@ -18,6 +18,7 @@ import {
   getCookie,
   REFRESH_TOKEN_COOKIE_NAME,
 } from '@/shared/auth/utils';
+import { UserDto } from '@/user/user.entity';
 
 @ApiTags('🔐 인증')
 @Controller('auth')
@@ -66,7 +67,7 @@ export class AuthController {
   }
 
   @Post('login')
-  @ApiOkResponse({ type: AuthSuccessDto })
+  @ApiOkResponse({ type: UserDto })
   @ApiOperation({
     summary: '로그인',
     description: `
@@ -85,12 +86,13 @@ export class AuthController {
   async login(
     @Body() body: LoginInputDto,
     @Res({ passthrough: true }) res: Response,
-  ): Promise<AuthSuccessDto> {
-    const { accessToken, refreshToken } = await this.authService.login(body);
+  ): Promise<UserDto> {
+    const { accessToken, refreshToken, user } =
+      await this.authService.login(body);
     this.setAccessCookie(res, accessToken);
     this.setRefreshCookie(res, refreshToken);
 
-    return { success: true };
+    return user;
   }
 
   @Post('refresh')

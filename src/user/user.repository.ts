@@ -72,6 +72,10 @@ export class UserRepository {
         eq(this.userModel.email, input.email),
         eq(this.userModel.password, input.password),
       ),
+      columns: {
+        id: true,
+        email: true,
+      },
     });
 
     if (!row) {
