@@ -4,6 +4,7 @@ export default () => {
     app: {
       serverEnv: serverEnv,
       port: Number(process.env.PORT ?? 3001),
+      ownerUserId: process.env.OWNER_USER_ID,
     },
     db: {
       url: process.env.DATABASE_URL!,

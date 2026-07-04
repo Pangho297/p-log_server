@@ -50,6 +50,22 @@ export class UserRepository {
     return row ?? null;
   }
 
+  async findUserById(userId: string) {
+    const row = await this.db.query.user_model.findFirst({
+      where: eq(this.userModel.id, userId),
+      columns: {
+        id: true,
+        email: true,
+      },
+    });
+
+    if (!row) {
+      throw new NotFoundException('사용자 계정을 찾을 수 없습니다.');
+    }
+
+    return row;
+  }
+
   async verifyAccount(input: VerifyUserInputDto): Promise<UserDto> {
     const row = await this.db.query.user_model.findFirst({
       where: and(

@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { ForbiddenException, Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { AuthRepository } from './auth.repository';
 import { randomUUID } from 'crypto';
@@ -72,6 +72,12 @@ export class AuthService {
       return payload;
     } catch {
       throw new UnauthorizedException('유효하지 않은 Access Token입니다');
+    }
+  }
+
+  assertOwner(userId: UUID) {
+    if (userId !== this.appConfigService.app.ownerUserId) {
+      throw new ForbiddenException('접근 권한이 없습니다.');
     }
   }
 

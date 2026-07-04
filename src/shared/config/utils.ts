@@ -4,6 +4,7 @@ export const envSchema = z.object({
   // COMMON
   SERVER_ENV: z.enum(['development', 'production']).default('development'),
   PORT: z.coerce.number().int().positive().default(3001),
+  OWNER_USER_ID: z.uuid(),
 
   // DB
   DATABASE_URL: z.string().min(1),

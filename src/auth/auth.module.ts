@@ -1,24 +1,16 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { AuthController } from './auth.controller';
-import { UserService } from '@/user/user.service';
-import { UserRepository } from '@/user/user.repository';
 import { AuthService } from './auth.service';
 import { AuthRepository } from './auth.repository';
 import { TokenGuard } from '@/shared/auth/token.guard';
 import { AppConfigModule } from '@/shared/config/config.module';
+import { UserModule } from '@/user/user.module';
 
 @Module({
-  imports: [AppConfigModule],
-  providers: [
-    TokenGuard,
-    JwtService,
-    UserService,
-    UserRepository,
-    AuthService,
-    AuthRepository,
-  ],
+  imports: [AppConfigModule, forwardRef(() => UserModule)],
+  providers: [TokenGuard, JwtService, AuthService, AuthRepository],
   controllers: [AuthController],
-  exports: [AuthService],
+  exports: [AuthService, TokenGuard],
 })
 export class AuthModule {}

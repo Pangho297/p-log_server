@@ -27,4 +27,8 @@ export class UserService {
   verifyAccount(body: VerifyUserInputDto) {
     return this.userRepository.verifyAccount(body);
   }
+
+  findUserById(userId: string) {
+    return this.userRepository.findUserById(userId);
+  }
 }

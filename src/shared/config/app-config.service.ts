@@ -9,6 +9,7 @@ export class AppConfigService {
     return {
       serverEnv: this.config.getOrThrow<string>('app.serverEnv'),
       port: this.config.getOrThrow<number>('app.port'),
+      ownerUserId: this.config.getOrThrow<string>('app.ownerUserId'),
     };
   }
 
