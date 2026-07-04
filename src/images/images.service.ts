@@ -13,14 +13,23 @@ export class ImagesService {
   ) {}
   async createDirectUploadUrl({
     ownerUserId,
+    purpose,
     postId,
   }: {
     ownerUserId: UUID;
-    postId: UUID;
+    purpose?: 'post-content';
+    postId?: UUID;
   }): Promise<CreateDirectUrlOutputDto> {
     const form = new FormData();
     form.append('requireSignedURLs', 'false'); // 공개 variant URL로 접근 가능
-    form.append('metadata', JSON.stringify({ ownerUserId, postId })); // 이미지 레코드에 커스텀 메타데이터 저장
+    form.append(
+      'metadata',
+      JSON.stringify({
+        ownerUserId,
+        purpose: purpose ?? 'post-content',
+        postId: postId ?? null,
+      }),
+    ); // 이미지 레코드에 커스텀 메타데이터 저장
 
     const res = await fetch(
       `https://api.cloudflare.com/client/v4/accounts/${this.appConfigService.cloudflare.accountId}/images/v2/direct_upload`,
@@ -45,7 +54,7 @@ export class ImagesService {
     await this.imagesRepository.create({
       imageId,
       ownerUserId,
-      postId,
+      postId: postId ?? null,
     });
 
     return {

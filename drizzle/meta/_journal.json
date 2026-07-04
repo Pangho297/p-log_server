@@ -29,6 +29,13 @@
       "when": 1774355793695,
       "tag": "0003_black_vulcan",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1783152000000,
+      "tag": "0004_editor_image_upload_policy",
+      "breakpoints": true
     }
   ]
 }

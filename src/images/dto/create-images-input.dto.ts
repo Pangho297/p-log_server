@@ -10,6 +10,10 @@ export class CreateImagesInputDto {
   @StringProperty({ description: '업로드를 시도한 사용자 Id' })
   ownerUserId: string;
 
-  @StringProperty({ description: '업로드를 시도한 게시글 Id' })
-  postId: string;
+  @StringProperty({
+    description: '업로드를 시도한 게시글 Id',
+    optional: true,
+    nullable: true,
+  })
+  postId?: string | null;
 }

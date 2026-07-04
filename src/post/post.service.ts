@@ -15,13 +15,22 @@ import { PostDto } from './post.entity';
 import { ImagesRepository } from '@/images/images.repository';
 import { extractCloudflareImageIds, extractCloudflareImageUrls } from './utils';
 import { defaultThumbnail } from '@/shared/constants/post';
+import { AppConfigService } from '@/shared/config/app-config.service';
 
 @Injectable()
 export class PostService {
   constructor(
     private readonly postRepository: PostRepository,
     private readonly imagesRepository: ImagesRepository,
+    private readonly appConfigService: AppConfigService,
   ) {}
+
+  private getCloudflareImageExtractOptions() {
+    return {
+      accountHash: this.appConfigService.cloudflare.accountHash,
+      allowedVariants: ['public'],
+    };
+  }
 
   private mappingRowData(row: PostDto): PostOutputDto {
     return {
@@ -43,7 +52,10 @@ export class PostService {
       throw new UnauthorizedException('사용자를 조회할 수 없습니다.');
     }
 
-    const extractImageUrls = extractCloudflareImageUrls(input.content);
+    const extractImageUrls = extractCloudflareImageUrls(
+      input.content,
+      this.getCloudflareImageExtractOptions(),
+    );
     const extractImageUrl = extractImageUrls ? extractImageUrls[0] : null;
 
     const randomIdx = Math.floor(Math.random() * 5);
@@ -56,13 +68,12 @@ export class PostService {
 
     const post = await this.postRepository.create(addThumbnailInput, userId);
 
-    /** 업로드 완료된 이미지 목록
-     *
-     * - 실제 업로드된 이미지들은 모두 상태를 attached로 변경
-     * - 업로드되진 않았지만 postId가 같다면 delete_pending으로 변경
-     */
-    const usedIds = extractCloudflareImageIds(input.content);
-    await this.imagesRepository.markImageStatusByPublish({
+    /** 최종 본문에 남아있는 이미지 목록을 현재 게시글과 동기화 */
+    const usedIds = extractCloudflareImageIds(
+      input.content,
+      this.getCloudflareImageExtractOptions(),
+    );
+    await this.imagesRepository.syncPostImages({
       ownerUserId: userId,
       postId: post.id,
       usedIds,
@@ -103,7 +114,10 @@ export class PostService {
     slug: string,
     input: UpdatePostInputDto,
   ): Promise<PostOutputDto> {
-    const extractImageUrls = extractCloudflareImageUrls(input.content);
+    const extractImageUrls = extractCloudflareImageUrls(
+      input.content,
+      this.getCloudflareImageExtractOptions(),
+    );
     const extractImageUrl = extractImageUrls ? extractImageUrls[0] : null;
 
     const randomIdx = Math.floor(Math.random() * 5);
@@ -120,8 +134,11 @@ export class PostService {
     );
 
     if (input.content) {
-      const usedIds = extractCloudflareImageIds(input.content);
-      await this.imagesRepository.markImageStatusByPublish({
+      const usedIds = extractCloudflareImageIds(
+        input.content,
+        this.getCloudflareImageExtractOptions(),
+      );
+      await this.imagesRepository.syncPostImages({
         ownerUserId: userId,
         postId: row.id,
         usedIds,
@@ -132,7 +149,12 @@ export class PostService {
   }
 
   async delete(userId: string, slug: string): Promise<{ success: boolean }> {
-    await this.postRepository.delete(userId, slug);
+    const row = await this.postRepository.delete(userId, slug);
+    await this.imagesRepository.markPostImagesAsDeletePending({
+      ownerUserId: userId,
+      postId: row.id,
+    });
+
     return { success: true };
   }
 }

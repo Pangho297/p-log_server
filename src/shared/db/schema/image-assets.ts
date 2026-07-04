@@ -20,7 +20,7 @@ export const image_assets_model = pgTable(
     id: uuid('id').defaultRandom().primaryKey(),
     imageId: varchar('image_id', { length: 128 }).notNull().unique(),
     ownerUserId: uuid('owner_user_id').notNull(),
-    postId: uuid('post_id').notNull(), // 초안 단위일 경우 draftId로 사용
+    postId: uuid('post_id'), // 게시글 생성 전 임시 이미지는 null
     status: imageStatusEnum('status').notNull().default('temp'),
     lastSeenAt: timestamp('last_seen_at', { withTimezone: true })
       .defaultNow()
@@ -34,6 +34,7 @@ export const image_assets_model = pgTable(
       .notNull(),
   },
   (table) => [
+    index('idx_image_assets_owner_status').on(table.ownerUserId, table.status),
     index('idx_image_assets_owner_post').on(table.ownerUserId, table.postId),
     index('idx_image_assets_status_delete_after').on(
       table.status,

@@ -4,27 +4,45 @@ import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import * as schema from '@/shared/db/schema';
 import { CreateImagesInputDto } from './dto/create-images-input.dto';
 import { MarkImageStatusInputDto } from './dto/mark-image-status-input.dto';
-import { and, eq, inArray, lte, notInArray, sql } from 'drizzle-orm';
+import {
+  and,
+  eq,
+  inArray,
+  isNull,
+  lte,
+  notInArray,
+  or,
+  sql,
+} from 'drizzle-orm';
 
 @Injectable()
 export class ImagesRepository {
-  private readonly GRACE_HOURS = 6;
+  private readonly DELETE_GRACE_HOURS = 6;
+  private readonly TEMP_TTL_HOURS = 24;
   private readonly imageAssetsModel = schema.image_assets_model;
 
   constructor(
     @Inject(DRIZZLE_DB) private readonly db: NodePgDatabase<typeof schema>,
   ) {}
 
+  private getDeleteAfter() {
+    return new Date(Date.now() + this.DELETE_GRACE_HOURS * 60 * 60 * 1000);
+  }
+
+  private getTempExpiresBefore() {
+    return new Date(Date.now() - this.TEMP_TTL_HOURS * 60 * 60 * 1000);
+  }
+
   async create({ imageId, ownerUserId, postId }: CreateImagesInputDto) {
     await this.db.insert(this.imageAssetsModel).values({
       imageId,
       ownerUserId,
-      postId,
+      postId: postId ?? null,
       status: 'temp',
     });
   }
 
-  async markImageStatusByPublish({
+  async syncPostImages({
     ownerUserId,
     postId,
     usedIds,
@@ -34,6 +52,7 @@ export class ImagesRepository {
         await tx
           .update(this.imageAssetsModel)
           .set({
+            postId,
             status: 'attached',
             lastSeenAt: new Date(),
             deleteAfter: null,
@@ -42,7 +61,10 @@ export class ImagesRepository {
           .where(
             and(
               eq(this.imageAssetsModel.ownerUserId, ownerUserId),
-              eq(this.imageAssetsModel.postId, postId),
+              or(
+                isNull(this.imageAssetsModel.postId),
+                eq(this.imageAssetsModel.postId, postId),
+              ),
               inArray(this.imageAssetsModel.status, [
                 'temp',
                 'delete_pending',
@@ -57,7 +79,7 @@ export class ImagesRepository {
         .update(this.imageAssetsModel)
         .set({
           status: 'delete_pending',
-          deleteAfter: sql`now() + interval ${sql.raw(String(this.GRACE_HOURS))} hours`,
+          deleteAfter: this.getDeleteAfter(),
           updatedAt: new Date(),
         })
         .where(
@@ -73,6 +95,30 @@ export class ImagesRepository {
     });
   }
 
+  async markPostImagesAsDeletePending({
+    ownerUserId,
+    postId,
+  }: Pick<MarkImageStatusInputDto, 'ownerUserId' | 'postId'>) {
+    await this.db
+      .update(this.imageAssetsModel)
+      .set({
+        status: 'delete_pending',
+        deleteAfter: this.getDeleteAfter(),
+        updatedAt: new Date(),
+      })
+      .where(
+        and(
+          eq(this.imageAssetsModel.ownerUserId, ownerUserId),
+          eq(this.imageAssetsModel.postId, postId),
+          inArray(this.imageAssetsModel.status, [
+            'temp',
+            'attached',
+            'delete_pending',
+          ]),
+        ),
+      );
+  }
+
   async markImageStatusByDeleted(id: string) {
     await this.db
       .update(this.imageAssetsModel)
@@ -83,19 +129,25 @@ export class ImagesRepository {
       .where(
         and(
           eq(this.imageAssetsModel.id, id),
-          eq(this.imageAssetsModel.status, 'delete_pending'),
+          inArray(this.imageAssetsModel.status, ['temp', 'delete_pending']),
         ),
       );
   }
 
-  async getDeletePendingImages() {
+  async getImagesReadyForGc() {
     return await this.db
       .select()
       .from(this.imageAssetsModel)
       .where(
-        and(
-          eq(this.imageAssetsModel.status, 'delete_pending'),
-          lte(this.imageAssetsModel.deleteAfter, new Date()),
+        or(
+          and(
+            eq(this.imageAssetsModel.status, 'delete_pending'),
+            lte(this.imageAssetsModel.deleteAfter, new Date()),
+          ),
+          and(
+            eq(this.imageAssetsModel.status, 'temp'),
+            lte(this.imageAssetsModel.createdAt, this.getTempExpiresBefore()),
+          ),
         ),
       )
       .limit(100);

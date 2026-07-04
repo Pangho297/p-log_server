@@ -24,12 +24,10 @@ export class ImageGcJob {
     const startedAt = Date.now();
 
     try {
-      const rows = await this.imagesRepository.getDeletePendingImages();
+      const rows = await this.imagesRepository.getImagesReadyForGc();
 
       if (rows.length === 0) {
-        console.log(
-          'delete_pending 이미지가 존재하지 않습니다. 작업이 중단됩니다.',
-        );
+        console.log('삭제 대상 이미지가 존재하지 않습니다. 작업이 중단됩니다.');
         return;
       }
 
@@ -55,6 +53,12 @@ export class ImageGcJob {
                   },
                 },
               );
+
+              if (res.status === 404) {
+                await this.imagesRepository.markImageStatusByDeleted(row.id);
+                success += 1;
+                return;
+              }
 
               if (!res.ok) {
                 const bodyText = await res.text().catch(() => '');

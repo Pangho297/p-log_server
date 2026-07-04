@@ -32,7 +32,7 @@ Cloudflare Images의 업로드 방식은 다음과 같습니다.
 1. 사용자가 게시글에 이미지를 업로드 할 수 있도록 서버에 **Cloudflare** 업로드 URL 요청
 2. 서버는 **Cloudflare**의 \`uploadURL\`을 받습니다
 3. 이 때 **Cloudflare**는 \`uploadURL\`뿐만 아닌 업로드될 이미지의 \`imageId\`도 부여해줍니다
-4. 서버는 \`imageId\`를 \`postId\`와 함께 **DB**에 \`temp\` 상태로 저장 후 사용자에게 전달(\`deliveryURL\` 포함)
+4. 서버는 \`imageId\`를 **ownerUserId** 기준으로 **DB**에 \`temp\` 상태로 저장 후 사용자에게 전달(\`deliveryURL\` 포함)
 5. 사용자는 전달받은 \`uploadURL\`을 이용해 **Cloudflare**에 이미지를 업로드
 6. 이후 게시글 업로드 시 사용된 이미지를 판별하여 이미지 업로드 상태를 \`attached\`로 갱신
 7. 서버는 **Cron**을 활용해 이미지 업로드 상태가 \`temp\`, \`delete_pending\` 상태인 이미지들을 **Cloudflare**에 삭제 요청 및 DB상태 갱신
@@ -44,7 +44,8 @@ Cloudflare Images의 업로드 방식은 다음과 같습니다.
   ): Promise<CreateDirectUrlOutputDto> {
     return await this.imagesService.createDirectUploadUrl({
       ownerUserId: userId,
-      postId: body.postId,
+      purpose: body?.purpose,
+      postId: body?.postId,
     });
   }
 }
