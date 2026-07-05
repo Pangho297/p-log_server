@@ -39,6 +39,7 @@ export class PostService {
       slug: row.slug,
       title: row.title,
       content: row.content,
+      thumbnail: row.thumbnail,
       tags: row.tags,
       createdAt: row.createdAt,
     };
@@ -104,6 +105,7 @@ export class PostService {
       slug: row.slug,
       title: row.title,
       content: row.content,
+      thumbnail: row.thumbnail,
       tags: row.tags,
       createdAt: row.createdAt,
     } satisfies PostOutputDto;

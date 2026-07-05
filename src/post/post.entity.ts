@@ -31,6 +31,11 @@ export class PostDto {
   })
   content: string;
 
+  @StringProperty({
+    description: '게시글 썸네일',
+  })
+  thumbnail: string;
+
   @ArrayProperty({ type: String, description: '식별 태그 목록' })
   tags: string[];
 

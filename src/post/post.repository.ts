@@ -94,6 +94,7 @@ export class PostRepository {
         userId: postModel.userId,
         slug: postModel.slug,
         title: postModel.title,
+        thumbnail: postModel.thumbnail,
         content: postModel.content,
         tags: postModel.tags,
         createdAt: postModel.createdAt,
