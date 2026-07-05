@@ -77,7 +77,7 @@ sequenceDiagram
   DB-->>BE: 사용자 정보
   BE->>BE: accessToken 생성<br/>refreshToken 생성
   BE->>DB: refreshToken 해시 저장
-  BE-->>FE: Set-Cookie: access_token=...; HttpOnly<br/>Set-Cookie: refresh_token=...; HttpOnly<br/>{ success: true }
+  BE-->>FE: Set-Cookie: access_token=... HttpOnly<br/>Set-Cookie: refresh_token=... HttpOnly<br/>{ success: true }
 
   Note over FE: 토큰 값은 JS 상태에 저장하지 않음<br/>브라우저가 HttpOnly 쿠키로 관리
 ```
