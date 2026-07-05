@@ -37,7 +37,7 @@ flowchart TD
 
   F --> P[로그아웃 요청<br/>POST /auth/logout]
   P --> Q[refreshToken revoke]
-  Q --> R[access_token, refresh_token 쿠키 제거]
+  Q --> R[access_token, refresh_token<br />쿠키 제거]
 ```
 
 ## 쿠키 설정
@@ -121,7 +121,7 @@ sequenceDiagram
   BE->>DB: refreshToken 상태 확인 및 교체
   DB-->>BE: 갱신 성공
   BE->>BE: 새 accessToken 생성<br/>새 refreshToken 생성
-  BE-->>FE: Set-Cookie: access_token=새 토큰; HttpOnly<br/>Set-Cookie: refresh_token=새 토큰; HttpOnly<br/>{ success: true }
+  BE-->>FE: Set-Cookie: access_token=새 토큰 HttpOnly<br/>Set-Cookie: refresh_token=새 토큰 HttpOnly<br/>{ success: true }
 
   FE->>BE: 실패했던 원래 요청 재시도<br/>Cookie: access_token=새 토큰
   BE-->>FE: 보호 API 응답
@@ -147,50 +147,10 @@ sequenceDiagram
   BE->>DB: refreshToken revoke 처리
   BE-->>FE: Clear-Cookie: access_token<br/>Clear-Cookie: refresh_token<br/>{ success: true }
 
-  Note over FE: zustand의 user, isAuthenticated 상태 초기화<br/>토큰은 직접 삭제하지 않음
+  Note over FE: zustand의 ownerStore 상태 초기화<br/>토큰은 직접 삭제하지 않음
 ```
 
 로그아웃 시 서버는 인증 쿠키를 제거합니다. 프론트엔드는 사용자 상태만 초기화하면 됩니다.
-
-## 프론트엔드 구현 기준
-
-프론트엔드 상태 관리에는 토큰을 저장하지 않습니다.
-
-```txt
-저장하지 않음
-- accessToken
-- refreshToken
-
-저장 가능
-- user
-- isAuthenticated
-- isLoading
-```
-
-axios 인스턴스에는 다음 설정이 필요합니다.
-
-```ts
-const axiosInstance = axios.create({
-  baseURL: API_BASE_URL,
-  withCredentials: true,
-});
-```
-
-요청 인터셉터에서 Authorization 헤더를 붙이는 로직은 제거합니다.
-
-```ts
-// 사용하지 않음
-config.headers.Authorization = `Bearer ${accessToken}`;
-```
-
-401 응답 처리 흐름은 다음 기준으로 구현합니다.
-
-```txt
-1. 보호 API 요청에서 401 발생
-2. /auth/refresh 호출
-3. refresh 성공 시 원래 요청 재시도
-4. refresh 실패 시 인증 상태 초기화 후 로그인 화면으로 이동
-```
 
 ## 백엔드 구현 위치
 
