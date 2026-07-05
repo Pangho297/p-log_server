@@ -13,8 +13,8 @@ export const ApiCombinedPaginateResponse = <TModel extends Type<unknown>>(
   ) => {
     ApiExtraModels(CombinedPaginate, PaginateOutputDto, model)(
       target,
-      propertyKey!,
-      descriptor!,
+      propertyKey,
+      descriptor,
     );
     ApiOkResponse({
       schema: {

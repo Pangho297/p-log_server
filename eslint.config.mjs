@@ -39,7 +39,7 @@ export default tseslint.config(
       "prettier/prettier": [
         "error",
         {
-          endOfLine: "off"
+          endOfLine: 'auto',
         }
       ],
     },
