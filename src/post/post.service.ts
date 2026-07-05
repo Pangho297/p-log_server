@@ -32,6 +32,19 @@ export class PostService {
     };
   }
 
+  private getThumbnailFromContent(content: string) {
+    const extractImageUrls = extractCloudflareImageUrls(
+      content,
+      this.getCloudflareImageExtractOptions(),
+    );
+    const extractImageUrl = extractImageUrls?.[0];
+
+    const randomIdx = Math.floor(Math.random() * defaultThumbnail.length);
+    const randomThumbnail = defaultThumbnail[randomIdx];
+
+    return extractImageUrl ?? randomThumbnail;
+  }
+
   private mappingRowData(row: PostDto): PostOutputDto {
     return {
       id: row.id,
@@ -53,18 +66,9 @@ export class PostService {
       throw new UnauthorizedException('사용자를 조회할 수 없습니다.');
     }
 
-    const extractImageUrls = extractCloudflareImageUrls(
-      input.content,
-      this.getCloudflareImageExtractOptions(),
-    );
-    const extractImageUrl = extractImageUrls ? extractImageUrls[0] : null;
-
-    const randomIdx = Math.floor(Math.random() * 5);
-    const randomThumbnail = defaultThumbnail[randomIdx];
-
     const addThumbnailInput = {
       ...input,
-      thumbnail: extractImageUrl ? extractImageUrl : randomThumbnail,
+      thumbnail: this.getThumbnailFromContent(input.content),
     };
 
     const post = await this.postRepository.create(addThumbnailInput, userId);
@@ -116,17 +120,11 @@ export class PostService {
     slug: string,
     input: UpdatePostInputDto,
   ): Promise<PostOutputDto> {
-    const extractImageUrls = extractCloudflareImageUrls(
-      input.content,
-      this.getCloudflareImageExtractOptions(),
-    );
-    const extractImageUrl = extractImageUrls ? extractImageUrls[0] : null;
-
-    const randomIdx = Math.floor(Math.random() * 5);
-    const randomThumbnail = defaultThumbnail[randomIdx];
     const addThumbnailInput = {
       ...input,
-      thumbnail: extractImageUrl ? extractImageUrl : randomThumbnail,
+      ...(input.content !== undefined
+        ? { thumbnail: this.getThumbnailFromContent(input.content) }
+        : {}),
     };
 
     const row = await this.postRepository.update(

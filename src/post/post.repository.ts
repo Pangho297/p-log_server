@@ -126,7 +126,7 @@ export class PostRepository {
   async update(
     userId: string,
     slug: string,
-    input: UpdatePostInputDto & { thumbnail: string },
+    input: UpdatePostInputDto & { thumbnail?: string },
   ): Promise<PostDto> {
     const postModel = schema.post_model;
 
@@ -160,6 +160,8 @@ export class PostRepository {
         title: input.title,
         content: input.content,
         tags: input.tags,
+        thumbnail: input.thumbnail,
+        updatedAt: new Date(),
       })
       .where(
         and(
