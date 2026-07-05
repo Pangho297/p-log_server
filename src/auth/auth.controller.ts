@@ -29,7 +29,7 @@ export class AuthController {
     return {
       httpOnly: true,
       secure: !IS_LOCAL,
-      sameSite: IS_LOCAL ? 'lax' : 'none',
+      sameSite: 'lax',
     };
   }
 
@@ -46,7 +46,7 @@ export class AuthController {
   private setRefreshCookie(res: Response, token: string) {
     res.cookie(REFRESH_TOKEN_COOKIE_NAME, token, {
       ...this.getBaseCookieOptions(),
-      path: '/auth',
+      path: '/',
       maxAge: 14 * 24 * 60 * 60 * 1000,
     });
   }
@@ -58,11 +58,7 @@ export class AuthController {
     });
     res.clearCookie(REFRESH_TOKEN_COOKIE_NAME, {
       ...this.getBaseCookieOptions(),
-      path: '/auth',
-    });
-    res.clearCookie(REFRESH_TOKEN_COOKIE_NAME, {
-      ...this.getBaseCookieOptions(),
-      path: '/auth/refresh',
+      path: '/',
     });
   }
 
