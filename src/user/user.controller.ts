@@ -12,7 +12,7 @@ export class UserController {
   constructor(private readonly userService: UserService) {}
 
   @Post()
-  @ApiOkResponse({ type: UserDto })
+  @ApiOkResponse({ type: String })
   @ApiOperation({
     summary: '계정 생성',
     description: `
@@ -28,8 +28,9 @@ export class UserController {
 실제 환경에선 생성 성공/실패 여부만 확인할 수 있어야 하겠지만 프로젝트 프리뷰 차원에서 생성 결과 반환 중
     `,
   })
-  create(@Body() body: CreateUserInputDto): Promise<UserDto> {
-    return this.userService.create(body);
+  create(@Body() body: CreateUserInputDto): string {
+    console.log(body);
+    return '현재는 다른 회원의 회원가입은 받고있지 않습니다';
   }
 
   @Get()
