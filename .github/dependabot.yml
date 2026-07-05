@@ -1,0 +1,46 @@
+version: 2
+
+updates:
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "Asia/Seoul"
+    open-pull-requests-limit: 5
+    versioning-strategy: "increase-if-necessary"
+    commit-message:
+      prefix: "chore: 의존성 업데이트"
+      include: "scope"
+    groups:
+      nestjs:
+        patterns:
+          - "@nestjs/*"
+      eslint:
+        patterns:
+          - "@eslint/*"
+          - "eslint"
+          - "eslint-*"
+          - "typescript-eslint"
+          - "@typescript-eslint/*"
+          - "globals"
+      test:
+        patterns:
+          - "jest"
+          - "ts-jest"
+          - "@types/jest"
+          - "supertest"
+          - "@types/supertest"
+      typescript-tooling:
+        patterns:
+          - "typescript"
+          - "ts-node"
+          - "ts-loader"
+          - "tsx"
+          - "tsconfig-paths"
+          - "@swc/*"
+    ignore:
+      - dependency-name: "*"
+        update-types:
+          - "version-update:semver-major"
