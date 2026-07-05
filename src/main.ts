@@ -5,7 +5,7 @@ import {
   VERSION_NEUTRAL,
   VersioningType,
 } from '@nestjs/common';
-import { IS_LOCAL, PORT, SERVER_ENV } from './consts';
+import { PORT, SERVER_ENV } from './consts';
 import { setupSwagger } from './shared/swagger/setup';
 import { ValidationException } from './shared/exceptions/validation';
 import { AllInOneExceptionFilter } from './shared/exceptions/filter';
@@ -33,9 +33,7 @@ async function bootstrap() {
     defaultVersion: VERSION_NEUTRAL,
   });
 
-  if (IS_LOCAL) {
-    setupSwagger(app);
-  }
+  setupSwagger(app);
 
   app.enableCors({
     origin: true,

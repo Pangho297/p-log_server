@@ -4,10 +4,10 @@ import {
   SwaggerCustomOptions,
   SwaggerModule,
 } from '@nestjs/swagger';
-import { readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
-import { SWAGGER_FILE_PATH } from '@/consts';
+import { SWAGGER_FILE_PATH, SWAGGER_SERVER_URL } from '@/consts';
 import { ACCESS_TOKEN_COOKIE_NAME } from '@/shared/auth/utils';
 
 /** Swagger 세팅
@@ -22,12 +22,15 @@ export function setupSwagger(app: INestApplication) {
     'swagger',
     'description.md',
   );
-  const description = readFileSync(descriptionPath, 'utf-8');
+  const description = existsSync(descriptionPath)
+    ? readFileSync(descriptionPath, 'utf-8')
+    : 'P-log API Document';
 
   const config = new DocumentBuilder()
     .setTitle(`Pangho's 블로그 프로젝트 API`)
     .setDescription(description)
     .setVersion('v1')
+    .addServer(SWAGGER_SERVER_URL)
     .addCookieAuth(
       ACCESS_TOKEN_COOKIE_NAME,
       {
@@ -57,5 +60,5 @@ export function setupSwagger(app: INestApplication) {
     },
   };
 
-  SwaggerModule.setup('api/docs', app, document, options);
+  SwaggerModule.setup('docs', app, document, options);
 }
