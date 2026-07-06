@@ -23,7 +23,7 @@ export function toString(value: unknown): string {
   if (typeof value === 'string') return value;
   if (value === null || value === undefined) return '';
 
-  return String(value);
+  return JSON.stringify(value);
 }
 
 export function toNumber(value: unknown): number {
@@ -31,7 +31,7 @@ export function toNumber(value: unknown): number {
   const parsed = Number(value);
 
   if (isNaN(parsed)) {
-    throw new Error(`값을 숫자로 변경할 수 없습니다: ${value}`);
+    throw new Error(`값을 숫자로 변경할 수 없습니다: ${toString(value)}`);
   }
 
   return parsed;
@@ -46,7 +46,7 @@ export function toDate(value: unknown): Date {
 
   if (typeof value !== 'string') {
     throw new Error(
-      `날짜 형식으로 변경할 수 없습니다 ISO 형식의 string 날짜를 입력해 주세요: ${value}`,
+      `날짜 형식으로 변경할 수 없습니다 ISO 형식의 string 날짜를 입력해 주세요: ${toString(value)}`,
     );
   }
   const input = value.trim();

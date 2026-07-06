@@ -1,5 +1,3 @@
-import { PartialType } from '@nestjs/swagger';
-import { RefreshTokenEntity } from '../token.entity';
 import { DateProperty, StringProperty } from '@/shared/decorator';
 import { UUID } from '@/shared/types/common';
 

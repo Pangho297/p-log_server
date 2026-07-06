@@ -1,6 +1,20 @@
-# P-log Server
+<p align="center">
+  <a href="https://pangho.com" target="_blank" rel="noopener noreferrer">
+    <img src="https://imagedelivery.net/RKE42dt_Ful-0DfbKHMq4A/8495b737-fe60-4d17-7400-e6330157a100/public" alt="P.Log logo" width="96" height="96" />
+  </a>
+</p>
 
-개인 블로그를 위한 백엔드 API 서버입니다. NestJS와 PostgreSQL을 기반으로 사용자 인증, 게시글 관리, Cloudflare Images 직접 업로드 URL 발급, 이미지 자산 상태 관리, Swagger 문서화를 제공합니다.
+<h1 align="center">P.Log Server</h1>
+
+<p align="center">
+  개발 기록과 기술 경험을 정리하는 개인 블로그 <strong>P.Log</strong>의 백엔드 API 서버입니다.
+</p>
+
+<p align="center">
+  <a href="https://pangho.com" target="_blank" rel="noopener noreferrer"><strong>https://pangho.com</strong></a>
+</p>
+
+NestJS와 PostgreSQL을 기반으로 사용자 인증, 게시글 관리, Cloudflare Images 직접 업로드 URL 발급, 이미지 자산 상태 관리, Swagger 문서화를 제공합니다.
 
 ## 기술 스택
 
