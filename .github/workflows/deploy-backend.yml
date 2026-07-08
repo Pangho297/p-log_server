@@ -86,7 +86,7 @@ jobs:
             set -e
             cd ${DEPLOY_PATH}
             docker-compose pull backend
-            docker-compose up -d backend
+            docker-compose up -d --no-deps --force-recreate backend
             docker-compose exec -T backend pnpm db:migrate
             docker image prune -f
           "
